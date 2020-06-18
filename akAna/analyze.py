@@ -1,8 +1,14 @@
-import uproot
+Aimport uproot
 import numpy as np
+import numba
 import awkward1 as ak
 
 from utils import plot
+
+# control what to plot
+drawInputHistograms = False
+drawTruthElectrons = False
+#drawRecoElectrons = False
 
 cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
@@ -35,32 +41,109 @@ cms_events = ak.zip({
 }, depth_limit=1)
 
 
-# histogram all attributes
-for collection in cms_events.columns:
-    for attr in cms_events[collection].columns:
-        flat_values = ak.flatten(ak.to_list(cms_events[collection][attr]))
-        plot(flat_values,collection+'_'+attr, xtitle=collection+" "+attr)
+@numba.jit
+def truth_link(gen_parts_per_event, builder):
+    # first fill a dictionary containing every electron like
+    # daughter_dict[mother idx] = daughter idx
+    # where each are electrons
+    # if an ele daughter doesn't exist, give -1 index
+    # assumes multiple electrons can't have the same mother
+    
+    for gen_parts in gen_parts_per_event:
+        builder.begin_list()
+        
+        ele_mothers={} # store mother indices
+        for i in range(len(gen_parts)):            
+            if np.abs(gen_parts[i].pdgId)==11:
+                ele_idx = i
+                mother_idx = gen_parts[ele_idx].mother
+                ele_mothers[ele_idx] = mother_idx if np.abs(gen_parts[mother_idx].pdgId)==11 else -1
+                while(mother_idx>=0 and np.abs(gen_parts[mother_idx].pdgId)==11):
+                    # step through mother tree, filling dict along the way
+                    ele_idx = mother_idx
+                    mother_idx = gen_parts[ele_idx].mother
+                    ele_mothers[ele_idx]=mother_idx
 
-# test gen_masks
+        first_ancestor={} # store first ancestor with the same pdgId
+        for e_idx in ele_mothers:
+            idx = e_idx
+            while idx in ele_mothers and ele_mothers[idx]>=0:
+                idx = ele_mothers[idx]
+            # (idx mother should now be -1)
+            first_ancestor[e_idx] = idx
+        
+        for i in range(len(gen_parts)):            
+            isFirst=False
+            isLast=False
+            motherPdgId=0
+
+            # record mother IDs, including those from the first ele even in the case of subseq eles
+            if gen_parts[i].mother>=0:
+                if i in first_ancestor:
+                    motherPdgId = gen_parts[gen_parts[first_ancestor[i]].mother].pdgId
+                else:
+                    motherPdgId = gen_parts[gen_parts[i].mother].pdgId
+                
+            if np.abs(gen_parts[i].pdgId)==11:
+                if i in set(ele_mothers.keys()) and ele_mothers[i]<0:
+                    #has no mother
+                    isFirst=True
+                if not (i in set(ele_mothers.values())):
+                    #no ones mother
+                    isFirst=True
+            
+            builder.begin_record()
+            builder.field("isFirst")
+            builder.append(isFirst)
+            builder.field("isLast")
+            builder.append(isLast)
+            builder.field("motherPdgId")
+            builder.append(motherPdgId)
+            builder.end_record()
+
+        builder.end_list()
+    return builder
+
+
+
+# histogram all attributes for input quantities
+if drawInputHistograms:
+    for collection in cms_events.columns:
+        n_objs = ak.num(cms_events[collection]['pt'])
+        plot(n_objs,"n_"+collection, xtitle=collection+" multiplicity")
+        for attr in cms_events[collection].columns:
+            flat_values = ak.flatten(ak.to_list(cms_events[collection][attr]))
+            plot(flat_values,collection+'_'+attr, xtitle=collection+" "+attr)
+
+
+# DEFINE THE TRUTH ELECTRONS        
+# derived array with extra truth information
+truth_builder = truth_link(cms_events['genParticles'], ak.ArrayBuilder())
+truth_extension = truth_builder.snapshot()
 ele_mask = np.abs(cms_events['genParticles']['pdgId']) == 11
-for attr in cms_events['genParticles'].columns:
-    flat_values = ak.flatten(ak.to_list(cms_events['genParticles'][attr]))
-    plot(flat_values,'genElectron_'+attr, xtitle="Gen Particle "+attr)
+first_mask = truth_extension['isFirst']
+last_mask = np.abs(cms_events['genParticles']['status']) == 1 # equivalent to last
+z_mask = truth_extension['motherPdgId'] == 23
+n2_mask = truth_extension['motherPdgId'] == 1000023
+gen_ele_mask = ele_mask & (z_mask | n2_mask) & last_mask
+truth_electrons = cms_events['genParticles'][gen_ele_mask]
 
-# number of electrons for genParticles
-for gen_num in cms_events['genParticles'].columns:
-    gen_number = [len(g_val) for g_val in ak.to_list( cms_events['genParticles'][gen_num][ele_mask])]
-    plot(gen_number,'test_elec')
+if drawTruthElectrons:
+    plot(ak.num(genEles),"n_genElectrons", xtitle="gen electron multiplicity")
+    for attr in genEles.columns:
+        plot(ak.flatten(ak.to_list(genEles[attr])),'genElectron_'+attr, xtitle="Gen Electron "+attr)
 
-# may have stolen the 'test_elec' from below so be careful when un-commenting
+# DEFINE THE RECO ELECTRONS        
+reco_electrons = cms_events['electrons']
 
-# small change
+# BEGIN THE ANALYSIS
 
-# electron_mask = np.abs(cms_events['genParticles']['pdgId']) == 11
-#
-# electron_pt_values = ak.to_list( cms_events['genParticles']['pt'][electron_mask])
-# flat_electron_pt_values = ak.flatten(electron_pt_values)
-#
-# plot(flat_pt_values,'test_all')
-# plot(flat_electron_pt_values,'test_ele')
+# now can make combos of truth_electrons and reco_electrons
+# ....
+# pairs = ak.cartesian(truth_electrons, reco_electrons)
+# truth, reco = ak.unzip(pairs)
+
+
+
+
 

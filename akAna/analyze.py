@@ -4,7 +4,7 @@ import awkward1 as ak
 
 from utils import plot
 
-cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
+cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
 
 cms_events = ak.zip({
@@ -47,11 +47,19 @@ for attr in cms_events['genParticles'].columns:
     flat_values = ak.flatten(ak.to_list(cms_events['genParticles'][attr]))
     plot(flat_values,'genElectron_'+attr, xtitle="Gen Particle "+attr)
 
-# electron_mask = np.abs(cms_events['genParticles']['pdgId']) == 11
+# number of electrons for genParticles
+for gen_num in cms_events['genParticles'].columns:
+    gen_number = [len(g_val) for g_val in ak.to_list( cms_events['genParticles'][gen_num][ele_mask])]
+    plot(gen_number,'test_elec')
 
+# may have stolen the 'test_elec' from below so be careful when un-commenting
+
+
+# electron_mask = np.abs(cms_events['genParticles']['pdgId']) == 11
+#
 # electron_pt_values = ak.to_list( cms_events['genParticles']['pt'][electron_mask])
 # flat_electron_pt_values = ak.flatten(electron_pt_values)
-
+#
 # plot(flat_pt_values,'test_all')
 # plot(flat_electron_pt_values,'test_ele')
 

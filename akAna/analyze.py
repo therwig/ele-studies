@@ -7,7 +7,7 @@ from utils import plot
 
 # control what to plot
 drawInputHistograms = False
-drawTruthElectrons = False
+drawTruthElectrons = True
 #drawRecoElectrons = False
 
 cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
@@ -129,9 +129,9 @@ gen_ele_mask = ele_mask & (z_mask | n2_mask) & last_mask
 truth_electrons = cms_events['genParticles'][gen_ele_mask]
 
 if drawTruthElectrons:
-    plot(ak.num(genEles),"n_genElectrons", xtitle="gen electron multiplicity")
-    for attr in genEles.columns:
-        plot(ak.flatten(ak.to_list(genEles[attr])),'genElectron_'+attr, xtitle="Gen Electron "+attr)
+    plot(ak.num(truth_electrons),"n_genElectrons", xtitle="gen electron multiplicity")
+    for attr in truth_electrons.columns:
+        plot(ak.flatten(ak.to_list(truth_electrons[attr])),'genElectron_'+attr, xtitle="Gen Electron "+attr)
 
 # DEFINE THE RECO ELECTRONS        
 reco_electrons = cms_events['electrons']

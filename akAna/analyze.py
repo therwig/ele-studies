@@ -118,8 +118,15 @@ truth_extension = truth_builder.snapshot()
 
 ele_mask = np.abs(cms_events['genParticles']['pdgId']) == 11
 z_mask = truth_extension['motherPdgId'] == 23
-gen_ele_mask = ele_mask & z_mask
+n2_mask = truth_extension['motherPdgId'] == 1000023
+gen_ele_mask = ele_mask & (z_mask | n2_mask)
 genEles = cms_events['genParticles'][gen_ele_mask]
+
+
+# vals = np.abs(truth_extension['motherPdgId'][ele_mask])
+# flat_values = ak.flatten(ak.to_list(vals))
+# plot(flat_values,'ele_mothers', xtitle="ele mother id ")
+# print(flat_values)
 
 n_objs = ak.num(genEles)
 print( np.sum(n_objs) )

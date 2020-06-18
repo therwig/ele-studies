@@ -5,6 +5,11 @@ import awkward1 as ak
 
 from utils import plot
 
+# control what to plot
+drawInputHistograms = False
+drawTruthElectrons = False
+#drawRecoElectrons = False
+
 cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
 
@@ -102,33 +107,40 @@ def truth_link(gen_parts_per_event, builder):
 
 
 # histogram all attributes for input quantities
-for collection in cms_events.columns:
-    n_objs = ak.num(cms_events[collection]['pt'])
-    plot(n_objs,"n_"+collection, xtitle=collection+" multiplicity")
-    continue
-    for attr in cms_events[collection].columns:
-        flat_values = ak.flatten(ak.to_list(cms_events[collection][attr]))
-        plot(flat_values,collection+'_'+attr, xtitle=collection+" "+attr)
+if drawInputHistograms:
+    for collection in cms_events.columns:
+        n_objs = ak.num(cms_events[collection]['pt'])
+        plot(n_objs,"n_"+collection, xtitle=collection+" multiplicity")
+        for attr in cms_events[collection].columns:
+            flat_values = ak.flatten(ak.to_list(cms_events[collection][attr]))
+            plot(flat_values,collection+'_'+attr, xtitle=collection+" "+attr)
 
 
-        
+# DEFINE THE TRUTH ELECTRONS        
 # derived array with extra truth information
 truth_builder = truth_link(cms_events['genParticles'], ak.ArrayBuilder())
 truth_extension = truth_builder.snapshot()
-
 ele_mask = np.abs(cms_events['genParticles']['pdgId']) == 11
-#last_mask = truth_extension['isLast'] # currently buggy
+first_mask = truth_extension['isFirst']
 last_mask = np.abs(cms_events['genParticles']['status']) == 1 # equivalent to last
 z_mask = truth_extension['motherPdgId'] == 23
-first_mask = truth_extension['isFirst']
 n2_mask = truth_extension['motherPdgId'] == 1000023
 gen_ele_mask = ele_mask & (z_mask | n2_mask) & last_mask
-genEles = cms_events['genParticles'][gen_ele_mask]
+truth_electrons = cms_events['genParticles'][gen_ele_mask]
 
-n_objs = ak.num(genEles)
-print( np.sum(n_objs) )
-plot(ak.num(genEles),"n_genElectrons", xtitle="gen electron multiplicity")
-for attr in genEles.columns:
-    flat_values = ak.flatten(ak.to_list(genEles[attr]))
-    plot(flat_values,'genElectron_'+attr, xtitle="Gen Electron "+attr)
+if drawTruthElectrons:
+    plot(ak.num(genEles),"n_genElectrons", xtitle="gen electron multiplicity")
+    for attr in genEles.columns:
+        plot(ak.flatten(ak.to_list(genEles[attr])),'genElectron_'+attr, xtitle="Gen Electron "+attr)
+
+# DEFINE THE RECO ELECTRONS        
+reco_electrons = cms_events['electrons']
+
+# BEGIN THE ANALYSIS
+
+# now can make combos of truth_electrons and reco_electrons
+# ....
+# pairs = ak.cartesian(truth_electrons, reco_electrons)
+# truth, reco = ak.unzip(pairs)
+
 

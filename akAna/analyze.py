@@ -1,4 +1,4 @@
-Aimport uproot
+import uproot
 import numpy as np
 import numba
 import awkward1 as ak

@@ -7,8 +7,8 @@ from utils import plot
 
 # control what to plot
 drawInputHistograms = False
-drawTruthElectrons = True
-#drawRecoElectrons = False
+drawTruthElectrons = False
+drawRecoElectrons = True
 
 cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
@@ -135,6 +135,11 @@ if drawTruthElectrons:
 
 # DEFINE THE RECO ELECTRONS        
 reco_electrons = cms_events['electrons']
+
+if drawRecoElectrons:
+    plot(ak.num(reco_electrons), "n_recoElectrons", xtitle="reco electron multiplicity")
+    for recoe in reco_electrons.columns:
+        plot(ak.flatten(ak.to_list(reco_electrons[recoe])),'recoElectron_'+recoe, xtitle="Reco Electron"+recoe)
 
 # BEGIN THE ANALYSIS
 

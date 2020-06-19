@@ -137,10 +137,6 @@ if drawTruthElectrons:
 reco_electrons = cms_events['electrons']
 
 # BEGIN THE ANALYSIS
-
-# now can make combos of truth_electrons and reco_electrons
-# ....
-# pairs = ak.cartesian(truth_electrons, reco_electrons)
-# truth, reco = ak.unzip(pairs)
-
-
+pairs = ak.cartesian( [truth_electrons, reco_electrons] )
+t, r = ak.unzip(pairs)
+dR = np.sqrt(t.eta - r.eta)**2 -(t.phi - r.phi)**2)

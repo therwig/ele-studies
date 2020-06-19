@@ -3,12 +3,13 @@ import numpy as np
 import numba
 import awkward1 as ak
 
-from utils import plot
+from utils import plot,plotCollection
 
 # control what to plot
 drawInputHistograms = False
 drawTruthElectrons = False
-#drawRecoElectrons = False
+drawRecoElectrons = False
+drawMatchedCollections = True
 
 cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
@@ -137,6 +138,48 @@ if drawTruthElectrons:
 reco_electrons = cms_events['electrons']
 
 # BEGIN THE ANALYSIS
-pairs = ak.cartesian( [truth_electrons, reco_electrons] )
-t, r = ak.unzip(pairs)
-dR = np.sqrt(t.eta - r.eta)**2 -(t.phi - r.phi)**2)
+evt_mask = ak.num(truth_electrons)==2
+
+# truth matching
+@numba.jit
+def dr_match(evts_ts, evts_rs, builder):
+    # note: allows multiple truths to match 
+    # to same reco if they're within 0.05
+    for ei in range(len(evts_ts)):
+        builder.begin_list()
+
+        rs = evts_rs[ei]
+        ts = evts_ts[ei]
+        
+        for t in ts:
+            best_dr=-1
+            best_ind=-1
+            for ri in range(len(rs)):
+                r=rs[ri]
+                dr = np.sqrt((t.eta - r.eta)**2 + (t.phi - r.phi)**2)
+                if dr<0.05 and (best_dr<0 or dr<best_dr):
+                    best_dr=dr
+                    best_ind=ri
+    
+            builder.begin_record()
+            builder.field("reco_index")
+            builder.append(best_ind)
+            builder.end_record()
+
+        builder.end_list()
+    return builder
+
+match_builder = dr_match(truth_electrons, reco_electrons, ak.ArrayBuilder())
+match_extension = match_builder.snapshot()
+
+matching_truth_mask = match_extension.reco_index >= 0
+matching_reco_mask = match_extension.reco_index[matching_truth_mask]
+
+matched_truth = truth_electrons[matching_truth_mask]
+unmatched_truth = truth_electrons[~matching_truth_mask]
+matched_reco = reco_electrons[matching_reco_mask]
+
+if drawMatchedCollections:
+    plotCollection(matched_truth,   "matched_truth_ele",   xtitle="matched truth electron")
+    plotCollection(unmatched_truth, "unmatched_truth_ele", xtitle="unmatched truth electron")
+    plotCollection(matched_reco,    "matched_truth_reco",  xtitle="matched reco electron")

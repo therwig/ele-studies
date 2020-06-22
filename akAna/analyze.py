@@ -11,7 +11,7 @@ drawTruthElectrons = False
 drawRecoElectrons = False
 drawMatchedCollections = True
 
-cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
+cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
 
 cms_events = ak.zip({

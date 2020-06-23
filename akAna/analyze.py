@@ -2,6 +2,7 @@ import uproot
 import numpy as np
 import numba
 import awkward1 as ak
+import os
 
 from utils import plot,plotCollection, efficiency
 
@@ -11,8 +12,14 @@ drawTruthElectrons = False
 drawRecoElectrons = False
 drawMatchedCollections = False
 
-#cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
-cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
+
+user = os.environ['USER']
+if 'dlehner' in user: 
+    cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
+else if 'herwig' in user: 
+    cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
+else:
+    raise Exception("Must set data directory for user: {}!".format(user))
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
 
 cms_events = ak.zip({
@@ -140,7 +147,8 @@ if drawTruthElectrons:
         plot(ak.flatten(ak.to_list(genEles[attr])),'genElectron_'+attr, xtitle="Gen Electron "+attr)
 
 # DEFINE THE RECO ELECTRONS        
-reco_electrons = cms_events['electrons']
+#reco_electrons = cms_events['electrons']
+reco_electrons = cms_events['softElectrons']
 
 # BEGIN THE ANALYSIS
 evt_mask = ak.num(truth_electrons)==2

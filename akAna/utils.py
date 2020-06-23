@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import awkward1 as ak
 
 def plot(vals,
          savename,
@@ -14,5 +15,16 @@ def plot(vals,
     plt.xlabel(xtitle)
     plt.ylabel(ytitle)
     for form in formats:
-        plt.savefig("{}/{}.{}".format(outDir,savename,form))
+        sname="{}/{}.{}".format(outDir,savename,form)
+        plt.savefig(sname)
+        print("Saved: "+sname)
     plt.close()
+
+def plotCollection(objs,
+                   savename,
+                   xtitle='',
+                   ):
+    plot(ak.num(objs),"n_"+savename, xtitle=xtitle+" multiplicity")
+    for attr in objs.columns:
+        plot(ak.flatten(objs[attr]), savename+'_'+attr, xtitle=xtitle+" "+attr)
+        #break # to just plot one thing

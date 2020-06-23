@@ -39,7 +39,11 @@ cms_events = ak.zip({
         "pdgId"      : cms_dict_ak1["Electron_pdgId"],
         "genPartIdx" : cms_dict_ak1["Electron_genPartIdx"],
         "genPartFlav": cms_dict_ak1["Electron_genPartFlav"],
-    })
+    }),
+    "softElectrons": ak.zip({
+        "pt"        : cms_dict_ak1["ElectronBPark_pt"],
+        # other attributes to be filled...
+    }),
 }, depth_limit=1)
 
 

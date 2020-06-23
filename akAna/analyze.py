@@ -3,15 +3,16 @@ import numpy as np
 import numba
 import awkward1 as ak
 
-from utils import plot,plotCollection
+from utils import plot,plotCollection, efficiency
 
 # control what to plot
 drawInputHistograms = False
 drawTruthElectrons = False
 drawRecoElectrons = False
-drawMatchedCollections = True
+drawMatchedCollections = False
 
-cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
+#cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
+cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
 
 cms_events = ak.zip({
@@ -183,3 +184,9 @@ if drawMatchedCollections:
     plotCollection(matched_truth,   "matched_truth_ele",   xtitle="matched truth electron")
     plotCollection(unmatched_truth, "unmatched_truth_ele", xtitle="unmatched truth electron")
     plotCollection(matched_reco,    "matched_truth_reco",  xtitle="matched reco electron")
+
+# display matching efficiencies
+passVals = ak.to_list(ak.flatten(matched_truth.pt))
+totVals = ak.to_list(ak.flatten(truth_electrons.pt))
+efficiency(passVals, totVals, "eff_pt", lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]")
+

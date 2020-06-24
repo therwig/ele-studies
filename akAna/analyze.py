@@ -6,7 +6,7 @@ import os
 import optparse
 
 from data import getData
-from utils import plot, plotCollection, efficiency
+from plot_utils import plotHist, plotCollection, plotEfficiency, combinePDFs
 from truth_utils import truth_link, dr_match
 
 def analyze(opts, args):
@@ -17,10 +17,10 @@ def analyze(opts, args):
     if opts.drawInputHistograms:
         for collection in cms_events.columns:
             n_objs = ak.num(cms_events[collection]['pt'])
-            plot(n_objs,"n_"+collection, xtitle=collection+" multiplicity")
+            plotHist(n_objs,"n_"+collection, xtitle=collection+" multiplicity", outDir=opts.odir)
             for attr in cms_events[collection].columns:
                 flat_values = ak.flatten(ak.to_list(cms_events[collection][attr]))
-                plot(flat_values,collection+'_'+attr, xtitle=collection+" "+attr)
+                plotHist(flat_values,collection+'_'+attr, var=attr, xtitle=collection+" "+attr, outDir=opts.odir)
     
     
     # DEFINE THE TRUTH ELECTRONS        
@@ -36,18 +36,18 @@ def analyze(opts, args):
     truth_electrons = cms_events['genParticles'][gen_ele_mask]
     
     if opts.drawTruthElectrons:
-        plot(ak.num(truth_electrons),"n_genElectrons", xtitle="gen electron multiplicity")
+        plotHist(ak.num(truth_electrons),"n_genElectrons", xtitle="gen electron multiplicity", outDir=opts.odir)
         for attr in truth_electrons.columns:
-            plot(ak.flatten(ak.to_list(truth_electrons[attr])),'genElectron_'+attr, xtitle="Gen Electron "+attr)
+            plotHist(ak.flatten(ak.to_list(truth_electrons[attr])),'genElectron_'+attr, var=attr, xtitle="Gen Electron "+attr, outDir=opts.odir)
     
     # DEFINE THE RECO ELECTRONS        
     #reco_electrons = cms_events['electrons']
     reco_electrons = cms_events['softElectrons']
     
     if opts.drawRecoElectrons:
-        plot(ak.num(reco_electrons), "n_recoElectrons", xtitle="reco electron multiplicity")
+        plotHist(ak.num(reco_electrons), "n_recoElectrons", xtitle="reco electron multiplicity", outDir=opts.odir)
         for recoe in reco_electrons.columns:
-            plot(ak.flatten(ak.to_list(reco_electrons[recoe])),'recoElectron_'+recoe, xtitle="Reco Electron"+recoe)
+            plotHist(ak.flatten(ak.to_list(reco_electrons[recoe])),'recoElectron_'+recoe, var=recoe, xtitle="Reco Electron"+recoe, outDir=opts.odir)
     
     # BEGIN THE ANALYSIS
     evt_mask = ak.num(truth_electrons)==2
@@ -69,9 +69,9 @@ def analyze(opts, args):
     # display matching efficiencies
     passVals = ak.to_list(ak.flatten(matched_truth.pt))
     totVals = ak.to_list(ak.flatten(truth_electrons.pt))
-    efficiency(passVals, totVals, "eff_pt", lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]")
+    plotEfficiency(passVals, totVals, "eff_pt", lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir)
 
-
+    combinePDFs()
 
 
 
@@ -79,7 +79,7 @@ def analyze(opts, args):
 if __name__ == "__main__":
     parser = optparse.OptionParser()
     parser.add_option('-i',"--input", type="string", default = '', help="path to input file")
-    parser.add_option('-o',"--odir", type="string", default = 'plots/', help="plots directory")
+    parser.add_option('-o',"--odir", type="string", default = 'output_plots/', help="plots directory")
     parser.add_option("--drawInputHistograms", action='store_true', default = False, help="histogram ALL input collections")
     parser.add_option("--drawTruthElectrons", action='store_true', default = False, help="histogram selected truth electrons")
     parser.add_option("--drawRecoElectrons", action='store_true', default = False, help="histogram selected reco electrons")

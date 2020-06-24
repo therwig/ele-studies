@@ -5,23 +5,48 @@ import matplotlib.pyplot as plt
 import awkward1 as ak
 from scipy.stats import beta
 from math import ceil
+import pathlib
+import os
 
-def plot(vals,
-         savename,
-         nbins=40,
-         xtitle='',
-         ytitle='Entries',
-         outDir='plots',
-         formats=['pdf']
-         ):
+from plot_config import config
+
+pdflist=[]
+
+def plotHist(vals,
+             savename,
+             nbins=40,
+             var='',
+             collection='',
+             xtitle='',
+             lims=None,
+             isLog=False,
+             ytitle='Entries',
+             outDir='plots',
+             formats=['pdf']
+            ):
+
     plt.figure(figsize=(6,4))
-    plt.hist(vals, nbins)
+
+    if var in config:
+        nbins = config[var].nbins
+        lims = (config[var].lo, config[var].hi)
+        isLog = config[var].log
+        xtitle = config[var].name
+
+    # plot and postfix overrides
+    plt.hist(vals, nbins, range=lims, log=isLog)
     plt.xlabel(xtitle)
     plt.ylabel(ytitle)
+
+    # save figs
+    pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
+    global pdflist
     for form in formats:
         sname="{}/{}.{}".format(outDir,savename,form)
+        sname = sname.replace('//','/')
         plt.savefig(sname)
         print("Saved: "+sname)
+        if form=='pdf': pdflist.append(sname)
     plt.close()
 
 def plotCollection(objs,
@@ -30,7 +55,7 @@ def plotCollection(objs,
                    ):
     plot(ak.num(objs),"n_"+savename, xtitle=xtitle+" multiplicity")
     for attr in objs.columns:
-        plot(ak.flatten(objs[attr]), savename+'_'+attr, xtitle=xtitle+" "+attr)
+        plotHist(ak.flatten(objs[attr]), savename+'_'+attr, xtitle=xtitle+" "+attr)
         #break # to just plot one thing
 
 def ErrDivide(p,n, lvl=0.68):
@@ -45,7 +70,7 @@ def ErrDivide(p,n, lvl=0.68):
     eHiRnd = ceil(eHi*n)/n
     return r, eLoRnd, eHiRnd #eLo, eHi
 
-def efficiency(passVals, totVals, savename,
+def plotEfficiency(passVals, totVals, savename,
                nbins=10, lims=None,
                xtitle='',
                outDir='plots',
@@ -63,9 +88,29 @@ def efficiency(passVals, totVals, savename,
     
     plt.xlabel(xtitle)
     plt.ylabel('Efficiency')
+    pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
+    global pdflist
     for form in formats:
         sname="{}/{}.{}".format(outDir,savename,form)
-    plt.savefig(sname)
-    print("Saved: "+sname)
+        sname = sname.replace('//','/')
+        plt.savefig(sname)
+        print("Saved: "+sname)
+        if form=='pdf': pdflist.append(sname)
     plt.close()
-B
+
+def combinePDFs(outname='latest'):
+    '''
+    Run like:
+    pdfjoin output_plots/*pdf -o out2.pdf
+    pdfunite *pdf outUNITE.pdf
+    '''
+    global pdflist
+    inlist = " ".join(pdflist)
+    user = os.environ['USER']
+    #host = os.environ['HOSTNAME']
+    if 'herwig' in user:
+        cmd = "pdfjoin -q "+inlist+" -o "+outname + ".pdf"
+    else:
+        cmd = "pdfunite "+inlist+" "+outname + ".pdf"
+    os.system(cmd)
+    print("Combined plots from this latest run into " + outname + ".pdf")

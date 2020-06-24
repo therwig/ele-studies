@@ -1,0 +1,28 @@
+*Br    0 :ElectronBPark_dxy : Float_t dxy (with sign) wrt first PV, in cm    *
+*Br    1 :ElectronBPark_dxyErr : Float_t dxy uncertainty, in cm              *
+*Br    2 :ElectronBPark_dz : Float_t dz (with sign) wrt first PV, in cm      *
+*Br    3 :ElectronBPark_dzErr : Float_t dz uncertainty, in cm                *
+*Br    4 :ElectronBPark_eta : Float_t eta                                    *
+*Br    5 :ElectronBPark_fBrem : Float_t brem fraction from the gsf fit       *
+*Br    6 :ElectronBPark_ip3d :                                               *
+*Br    7 :ElectronBPark_mass : Float_t mass                                  *
+*Br    8 :ElectronBPark_mvaId : Float_t MVA ID for low pT, 20 for pfEle      *
+*Br    9 :ElectronBPark_pfRelIso :                                           *
+*Br   10 :ElectronBPark_pfmvaId : Float_t MVA ID for pfEle, 20 for low pT    *
+*Br   11 :ElectronBPark_phi : Float_t phi                                    *
+*Br   12 :ElectronBPark_pt : Float_t pt                                      *
+*Br   13 :ElectronBPark_ptBiased :                                           *
+*Br   14 :ElectronBPark_sip3d :                                              *
+*Br   15 :ElectronBPark_trkRelIso :                                          *
+*Br   16 :ElectronBPark_unBiased :                                           *
+*Br   17 :ElectronBPark_vx : Float_t x coordinate of vertex position, in cm  *
+*Br   18 :ElectronBPark_vy : Float_t y coordinate of vertex position, in cm  *
+*Br   19 :ElectronBPark_vz : Float_t z coordinate of vertex position, in cm  *
+*Br   20 :ElectronBPark_charge :                                             *
+*Br   21 :ElectronBPark_pdgId :                                              *
+*Br   22 :ElectronBPark_convVeto : Bool_t pass conversion veto               *
+*Br   23 :ElectronBPark_isLowPt : Bool_t electron is LowPt candidate         *
+*Br   24 :ElectronBPark_isPF : Bool_t electron is PF candidate               *
+*Br   25 :ElectronBPark_isPFoverlap :                                        *
+*Br   26 :ElectronBPark_genPartIdx :                                         *
+*Br   27 :ElectronBPark_genPartFlav :                                        *

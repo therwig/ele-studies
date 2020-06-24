@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('PDF')
 import matplotlib.pyplot as plt
 import awkward1 as ak
 from scipy.stats import beta
@@ -10,7 +12,7 @@ def plot(vals,
          xtitle='',
          ytitle='Entries',
          outDir='plots',
-         formats=['png']
+         formats=['pdf']
          ):
     plt.figure(figsize=(6,4))
     plt.hist(vals, nbins)
@@ -47,7 +49,7 @@ def efficiency(passVals, totVals, savename,
                nbins=10, lims=None,
                xtitle='',
                outDir='plots',
-               formats=['png']):
+               formats=['pdf']):
     if lims==None: lims = (totVals.min(),totVals.max())
     bin_edges = np.linspace(lims[0],lims[1],nbins+1)
     bin_centers = (bin_edges[:-1] + bin_edges[1:])/2.
@@ -66,5 +68,4 @@ def efficiency(passVals, totVals, savename,
     plt.savefig(sname)
     print("Saved: "+sname)
     plt.close()
-
-
+B

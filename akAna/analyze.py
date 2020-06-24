@@ -2,27 +2,34 @@ import uproot
 import numpy as np
 import numba
 import awkward1 as ak
+import os
 
-from utils import plot,plotCollection
+from utils import plot,plotCollection,efficiency
 
 # control what to plot
 drawInputHistograms = False
 drawTruthElectrons = False
 drawRecoElectrons = False
-drawMatchedCollections = True
+drawMatchedCollections = False
 
-cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
+user = os.environ['USER']
+if 'dlehner' in user:
+    cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
+elif 'herwig' in user:
+    cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
+else:
+    raise Exception("Must set data directory for user: {}!".format(user))
 cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
 
 cms_events = ak.zip({
     "genParticles": ak.zip({
-        "pt":     cms_dict_ak1["GenPart_pt"],
-        "eta":    cms_dict_ak1["GenPart_eta"],
-        "phi":    cms_dict_ak1["GenPart_phi"],
-        "mass":   cms_dict_ak1["GenPart_mass"],
-        "status": cms_dict_ak1["GenPart_status"],
-        "mother": cms_dict_ak1["GenPart_genPartIdxMother"],
-        "pdgId":  cms_dict_ak1["GenPart_pdgId"],
+        "pt"     : cms_dict_ak1["GenPart_pt"],
+        "eta"    : cms_dict_ak1["GenPart_eta"],
+        "phi"    : cms_dict_ak1["GenPart_phi"],
+        "mass"   : cms_dict_ak1["GenPart_mass"],
+        "status" : cms_dict_ak1["GenPart_status"],
+        "mother" : cms_dict_ak1["GenPart_genPartIdxMother"],
+        "pdgId"  : cms_dict_ak1["GenPart_pdgId"],
     }),
     "electrons": ak.zip({
         "dxy"        : cms_dict_ak1["Electron_dxy"],
@@ -38,7 +45,37 @@ cms_events = ak.zip({
         "pdgId"      : cms_dict_ak1["Electron_pdgId"],
         "genPartIdx" : cms_dict_ak1["Electron_genPartIdx"],
         "genPartFlav": cms_dict_ak1["Electron_genPartFlav"],
-    })
+    }),
+    "softElectrons": ak.zip({
+        "dxy"         : cms_dict_ak1["ElectronBPark_dxy"],
+        "dxyErr"      : cms_dict_ak1["ElectronBPark_dxyErr"],
+        "dz"          : cms_dict_ak1["ElectronBPark_dz"],
+        "dzErr"       : cms_dict_ak1["ElectronBPark_dzErr"],
+        "eta"         : cms_dict_ak1["ElectronBPark_eta"],
+        "fBrem"       : cms_dict_ak1["ElectronBPark_fBrem"],
+        "ip3d"        : cms_dict_ak1["ElectronBPark_ip3d"],
+        "mass"        : cms_dict_ak1["ElectronBPark_mass"],
+        "mvaId"       : cms_dict_ak1["ElectronBPark_mvaId"],
+        "pfRelIso"    : cms_dict_ak1["ElectronBPark_pfRelIso"],
+        "pfvaId"      : cms_dict_ak1["ElectronBPark_pfmvaId"],
+        "phi"         : cms_dict_ak1["ElectronBPark_phi"],
+        "pt"          : cms_dict_ak1["ElectronBPark_pt"],
+        "ptBiased"    : cms_dict_ak1["ElectronBPark_ptBiased"],
+        "sip3d"       : cms_dict_ak1["ElectronBPark_sip3d"],
+        "trkRelIso"   : cms_dict_ak1["ElectronBPark_trkRelIso"],
+        "unBiased"    : cms_dict_ak1["ElectronBPark_unBiased"],
+        "vx"          : cms_dict_ak1["ElectronBPark_vx"],
+        "vy"          : cms_dict_ak1["ElectronBPark_vy"],
+        "vz"          : cms_dict_ak1["ElectronBPark_vz"],
+        "charge"      : cms_dict_ak1["ElectronBPark_charge"],
+        "pdgId"       : cms_dict_ak1["ElectronBPark_pdgId"],
+#        "convVeto"    : cms_dict_ak1["ElectronBPark_convVeto"],         #these are all boolean values (having errors for now)
+#        "isLowPt"     : cms_dict_ak1["ElectronBPark_isLowPt"],
+#        "isPF"        : cms_dict_ak1["ElectronBPark_isPF"],
+#        "isPFoverlap" : cms_dict_ak1["ElectronBPark_isPFoverlap"],
+        "genPartIdx"  : cms_dict_ak1["ElectronBPark_genPartIdx"],
+        "GenPartFlav" : cms_dict_ak1["ElectronBPark_genPartFlav"],
+    }),
 }, depth_limit=1)
 
 
@@ -135,7 +172,8 @@ if drawTruthElectrons:
         plot(ak.flatten(ak.to_list(truth_electrons[attr])),'genElectron_'+attr, xtitle="Gen Electron "+attr)
 
 # DEFINE THE RECO ELECTRONS        
-reco_electrons = cms_events['electrons']
+#reco_electrons = cms_events['electrons']
+reco_electrons = cms_events['softElectrons']
 
 if drawRecoElectrons:
     plot(ak.num(reco_electrons), "n_recoElectrons", xtitle="reco electron multiplicity")
@@ -188,3 +226,8 @@ if drawMatchedCollections:
     plotCollection(matched_truth,   "matched_truth_ele",   xtitle="matched truth electron")
     plotCollection(unmatched_truth, "unmatched_truth_ele", xtitle="unmatched truth electron")
     plotCollection(matched_reco,    "matched_truth_reco",  xtitle="matched reco electron")
+
+#display matching efficiencies
+passVals = ak.to_list(ak.flatten(matched_truth.pt))
+totVals = ak.to_list(ak.flatten(truth_electrons.pt))
+efficiency(passVals, totVals, "eff_pt", lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]")

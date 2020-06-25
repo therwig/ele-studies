@@ -72,7 +72,7 @@ def plotCollection(objs,
     if type(objs) is list:
         plotHist("n_"+savename, vals=[ak.num(o) for o in objs], xtitle=xtitle+" multiplicity", leg=leg, outDir=outDir)
         for attr in objs[0].columns:
-            plotHist(savename+'_'+attr, vals=[ak.flatten(o[attr]) for o in objs], xtitle=xtitle+" "+attr, leg=leg, outDir=outDir)
+            plotHist(savename+'_'+attr, vals=[ak.to_list(ak.flatten(o[attr])) for o in objs], xtitle=xtitle+" "+attr, leg=leg, outDir=outDir)
     else:
         plotHist("n_"+savename, vals=ak.num(objs), xtitle=xtitle+" multiplicity", leg=leg, outDir=outDir)
         for attr in objs.columns:
@@ -147,7 +147,11 @@ def combinePDFs(outname='latest'):
     #host = os.environ['HOSTNAME']
     if 'herwig' in user:
         cmd = "pdfjoin -q "+inlist+" -o "+outname + ".pdf"
+        if len(pdflist) >= 248:
+            print("Can't combine more than 248 inputs!")
+        else:
+            os.system(cmd)
+            print("Combined plots from this latest run into " + outname + ".pdf")
     else:
         cmd = "pdfunite "+inlist+" "+outname + ".pdf"
-    os.system(cmd)
-    print("Combined plots from this latest run into " + outname + ".pdf")
+        print("Combined plots from this latest run into " + outname + ".pdf")

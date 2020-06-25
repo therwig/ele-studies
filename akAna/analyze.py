@@ -16,7 +16,7 @@ def analyze(opts, args):
     # histogram all attributes for input quantities
     if opts.drawInputHistograms:
         for collection in cms_events.columns:
-            plotCollection(cms_events[collection], collection, xtitle=collection, outDir=opts.odir)    
+            plotCollection(cms_events[collection], collection, xtitle=collection, outDir=opts.odir+"/diagnostic/input_collections")    
     
     # DEFINE THE TRUTH ELECTRONS        
     # derived array with extra truth information
@@ -31,7 +31,7 @@ def analyze(opts, args):
     truth_electrons = cms_events['genParticles'][gen_ele_mask]
     
     if opts.drawTruthElectrons:
-        plotCollection(truth_electrons, "genElectrons", xtitle="genElectrons", outDir=opts.odir)    
+        plotCollection(truth_electrons, "genElectrons", xtitle="genElectrons", outDir=opts.odir+"/diagnostic/all_truth_eles")    
     
     # DEFINE THE RECO ELECTRONS        
     #reco_electrons = cms_events['electrons']
@@ -43,7 +43,7 @@ def analyze(opts, args):
         }
     
     if opts.drawRecoElectrons:
-        plotCollection(reco_electrons, "recoElectrons", xtitle="recoElectrons", outDir=opts.odir)    
+        plotCollection(reco_electrons, "recoElectrons", xtitle="recoElectrons", outDir=opts.odir+"/diagnostic/all_reco_eles")    
     
     # BEGIN THE ANALYSIS
     evt_mask = ak.num(truth_electrons)==2
@@ -66,35 +66,36 @@ def analyze(opts, args):
         unmatched_reco = signal_electrons[~matching_reco_mask]
         
         if opts.drawMatchedCollections:
-            plotCollection(matched_truth,   "matched_truth_ele",   xtitle="matched truth electron"  ,outDir=opts.odir)
-            plotCollection(unmatched_truth, "unmatched_truth_ele", xtitle="unmatched truth electron",outDir=opts.odir)
-            plotCollection(matched_reco,    "matched_truth_reco",  xtitle="matched reco electron"   ,outDir=opts.odir)
-            plotCollection(unmatched_reco,  "unmatched_truth_reco",xtitle="unmatched reco electron" ,outDir=opts.odir)
+            plotCollection(matched_truth,   "matched_truth_ele",   xtitle="matched truth electron"  ,outDir=opts.odir+"/diagnostic/matched_collections/"+cut_name)
+            plotCollection(unmatched_truth, "unmatched_truth_ele", xtitle="unmatched truth electron",outDir=opts.odir+"/diagnostic/matched_collections/"+cut_name)
+            plotCollection(matched_reco,    "matched_truth_reco",  xtitle="matched reco electron"   ,outDir=opts.odir+"/diagnostic/matched_collections/"+cut_name)
+            plotCollection(unmatched_reco,  "unmatched_truth_reco",xtitle="unmatched reco electron" ,outDir=opts.odir+"/diagnostic/matched_collections/"+cut_name)
         if opts.drawMatchedTruth:
-            plotCollection([matched_truth,unmatched_truth], cut_name+"_matching_truth", leg=["matched","unmatched"],outDir=opts.odir)
+            plotCollection([matched_truth,unmatched_truth], cut_name+"_matching_truth", leg=["matched","unmatched"],outDir=opts.odir+"/diagnostic/match_comparison/truth_"+cut_name)
         if opts.drawMatchedReco:
-            plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"],outDir=opts.odir)
+            plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"],outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name)
         
         # display matching efficiencies
         passVals = ak.to_list(ak.flatten(matched_truth.pt))
         totVals = ak.to_list(ak.flatten(truth_electrons.pt))
-        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir)[0]
+        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
         efficiencies[cut_name]=eff
 
         # record number of signal electrons
-        fakes = plotHist("n_signalElectrons_"+cut_name, vals=ak.num(signal_electrons), xtitle="signal electron multiplicity", outDir=opts.odir, lims=(-0.5,99.5), nbins=50)
+        nfakes = ak.num(signal_electrons) - ak.num(matched_reco)
+        fakes = plotHist("n_signalElectrons_"+cut_name, vals=nfakes, xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes", lims=(-0.5,159.5), nbins=80)
         nFakes[cut_name]=fakes
 
     plotEfficiency("eff_pt",
                    effs=[efficiencies[cut] for cut in reco_cuts],
                    leg=[cut for cut in reco_cuts],
                    xtitle="truth electron p_T [GeV]",
-                   outDir=opts.odir)
+                   outDir=opts.odir+"/final_comparisons")
     plotHist("nfakes",
              hists=[nFakes[cut] for cut in reco_cuts],
              leg=[cut for cut in reco_cuts],
              xtitle="fake multiplicity",
-             outDir=opts.odir)
+             outDir=opts.odir+"/final_comparisons")
         
     combinePDFs()
 

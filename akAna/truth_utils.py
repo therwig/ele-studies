@@ -76,8 +76,10 @@ def dr_match(evts_ts, evts_rs, builder):
 
         rs = evts_rs[ei]
         ts = evts_ts[ei]
-        
-        for t in ts:
+
+        truth_to_reco={}
+        for ti in range(len(ts)):
+            t=ts[ti]
             best_dr=-1
             best_ind=-1
             for ri in range(len(rs)):
@@ -86,11 +88,22 @@ def dr_match(evts_ts, evts_rs, builder):
                 if dr<0.05 and (best_dr<0 or dr<best_dr):
                     best_dr=dr
                     best_ind=ri
-    
+            truth_to_reco[ti]=ri
+            
             builder.begin_record()
-            builder.field("reco_index")
+            builder.field("truth_to_reco_index")
             builder.append(best_ind)
             builder.end_record()
 
+        # for ri in range(len(rs)):
+        #     #r=rs[ri]
+        #     ind=-1
+        #     # if ri in set(truth_to_reco.values()):
+        #     #     ind = list(truth_to_reco.keys())[list(truth_to_reco.values()).index(ri)]
+        #     builder.begin_record()
+        #     builder.field("reco_to_truth_index")
+        #     builder.append(ind)
+        #     builder.end_record()
+            
         builder.end_list()
     return builder

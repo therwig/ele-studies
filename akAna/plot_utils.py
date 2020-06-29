@@ -21,9 +21,11 @@ def plotHist(savename,
              xtitle='',
              lims=None,
              isLog=False,
+             norm=False,
              ytitle='Entries',
              outDir='plots',
              leg=None,
+             writeTitle=True,
              formats=['pdf']
             ):
 
@@ -38,29 +40,32 @@ def plotHist(savename,
 
     # plot and postfix overrides
     if vals:
-        packed = plt.hist(vals, nbins, range=lims, log=isLog)
+        packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm)
     elif hists:
         for packed_hist in hists:
             vals, bins, patches = packed_hist
             centers = (bins[1:] + bins[:-1])/2
-            plt.hist(x=centers, weights=vals, bins=bins, log=isLog)
+            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm)
             # plt.hist(x=np.ones_like(vals), weights=vals, bins=bins, log=isLog)
             #plt.hist(data=vals, bins=bins, log=isLog)
         packed=None
     plt.xlabel(xtitle)
     plt.ylabel(ytitle)
 
+    sname="{}/{}".format(outDir,savename)
+    sname = sname.replace('//','/')
+    if writeTitle: plt.text(-0.1, 1.1, sname, fontsize=6, transform=plt.gca().transAxes)
+    
     if leg: fig.legend(leg)
     
     # save figs
     pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
     global pdflist
     for form in formats:
-        sname="{}/{}.{}".format(outDir,savename,form)
-        sname = sname.replace('//','/')
-        plt.savefig(sname)
-        print("Saved: "+sname)
-        if form=='pdf': pdflist.append(sname)
+        snames=sname+"."+form
+        plt.savefig(snames)
+        print("Saved: "+snames)
+        if form=='pdf': pdflist.append(snames)
     plt.close()
     return packed
 
@@ -69,16 +74,21 @@ def plotCollection(objs,
                    xtitle='',
                    leg=None,
                    outDir='plots',
-                   ):
+                   normAttrs=False,
+                  ):
     if type(objs) is list:
         plotHist("n_"+savename, vals=[ak.num(o) for o in objs], xtitle=xtitle+" multiplicity", leg=leg, outDir=outDir)
         for attr in objs[0].columns:
+
             print("plotting variable "+attr)
-            plotHist(savename+'_'+attr, var=attr, vals=[ak.to_list(ak.flatten(o[attr])) for o in objs], xtitle=xtitle+" "+attr, leg=leg, outDir=outDir)
+            plotHist(savename+'_'+attr, vals=[ak.to_list(ak.flatten(o[attr])) for o in objs], xtitle=xtitle+" "+attr, leg=leg, 
+                     outDir=outDir, norm=normAttrs)
     else:
         plotHist("n_"+savename, vals=ak.num(objs), xtitle=xtitle+" multiplicity", leg=leg, outDir=outDir)
         for attr in objs.columns:
-            plotHist(savename+'_'+attr, var=attr, vals=ak.flatten(objs[attr]), xtitle=xtitle+" "+attr, leg=leg, outDir=outDir)
+            plotHist(savename+'_'+attr, vals=ak.flatten(objs[attr]), xtitle=xtitle+" "+attr, leg=leg,
+                     outDir=outDir, norm=normAttrs)
+
         #break # to just plot one thing
 
 def ErrDivide(p,n, lvl=0.68):

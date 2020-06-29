@@ -4,10 +4,10 @@ import numba
 import awkward1 as ak
 import os
 
-def getData(opts):
+def getData(opts=None):
     
-    if opts.input:
-        cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
+    if opts and opts.input:
+        cms_dict = uproot.open(opts.input)["Events"].arrays()
     else:
         user = os.environ['USER']
         if 'dlehner' in user:

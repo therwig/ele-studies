@@ -32,6 +32,7 @@ def plotHist(savename,
     fig = plt.figure(figsize=(6,4))
 
     if var in config:
+        print(var+ "is in config")
         nbins = config[var].nbins
         lims = (config[var].lo, config[var].hi)
         isLog = config[var].log
@@ -78,13 +79,11 @@ def plotCollection(objs,
     if type(objs) is list:
         plotHist("n_"+savename, vals=[ak.num(o) for o in objs], xtitle=xtitle+" multiplicity", leg=leg, outDir=outDir)
         for attr in objs[0].columns:
-            plotHist(savename+'_'+attr, vals=[ak.to_list(ak.flatten(o[attr])) for o in objs], xtitle=xtitle+" "+attr, leg=leg,
-                     outDir=outDir, norm=normAttrs)
+            plotHist(savename+'_'+attr, var=attr, vals=[ak.to_list(ak.flatten(o[attr])) for o in objs], xtitle=xtitle+" "+attr, leg=leg, outDir=outDir, norm=normAttrs)
     else:
         plotHist("n_"+savename, vals=ak.num(objs), xtitle=xtitle+" multiplicity", leg=leg, outDir=outDir)
         for attr in objs.columns:
-            plotHist(savename+'_'+attr, vals=ak.flatten(objs[attr]), xtitle=xtitle+" "+attr, leg=leg,
-                     outDir=outDir, norm=normAttrs)
+            plotHist(savename+'_'+attr, var=attr, vals=ak.flatten(objs[attr]), xtitle=xtitle+" "+attr, leg=leg, outDir=outDir, norm=normAttrs)
         #break # to just plot one thing
 
 def ErrDivide(p,n, lvl=0.68):
@@ -162,4 +161,5 @@ def combinePDFs(outname='latest'):
             print("Combined plots from this latest run into " + outname + ".pdf")
     else:
         cmd = "pdfunite "+inlist+" "+outname + ".pdf"
+        os.system(cmd)
         print("Combined plots from this latest run into " + outname + ".pdf")

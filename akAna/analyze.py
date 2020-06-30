@@ -38,8 +38,9 @@ def analyze(opts, args):
     reco_electrons = cms_events['softElectrons']
     reco_cuts = {
         "all": reco_electrons.pt > -1,
-        "looseMVA": reco_electrons.mvaId > 0,
-        "tightMVA": reco_electrons.mvaId > 5,
+        "looseMVA": reco_electrons.mvaId > 0 & reco_electrons.pfRelIso < 3 & reco_electrons.sip3d < 500,
+        "tightMVA": reco_electrons.mvaId > 5 & reco_electrons.pfRelIso < 3 & reco_electrons.sip3d < 500,
+        #"dominic_special" : reco_electrons.sip3d < 5,
         }
     
     if opts.drawRecoElectrons:

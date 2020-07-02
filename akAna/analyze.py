@@ -53,13 +53,14 @@ def analyze(opts, args):
     for cut_name in reco_cuts:
         reco_mask = reco_cuts[cut_name]
         signal_electrons = reco_electrons[reco_mask]
-        
-        match_builder = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=False)
+
+        debugMatching=False
+        match_builder = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=False, debug=debugMatching)
         match_extension = match_builder.snapshot()
         matching_truth_mask = match_extension.truth_to_reco_index >= 0
         # matching_reco_mask = match_extension.truth_to_reco_index[matching_truth_mask]
     
-        match_builderR = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=True)
+        match_builderR = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=True, debug=debugMatching)
         match_extensionR = match_builderR.snapshot()
         matching_reco_mask = match_extensionR.reco_to_truth_index >= 0
         nonmatching_reco_mask = match_extensionR.reco_to_truth_index < 0

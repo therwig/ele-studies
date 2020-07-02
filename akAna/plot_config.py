@@ -3,7 +3,7 @@ from collections import namedtuple
 pcfg = namedtuple('pcfg','lo, hi, nbins, log, name')
 
 config = {
-    'pt'          : pcfg(      0,     30, 40,  True, 'p_T [GeV]'),
+    'pt'          : pcfg(      0,     30, 30,  True, 'p_T [GeV]'),
     'eta'         : pcfg(-3.1415, 3.1415, 40, False, 'eta'),
     'phi'         : pcfg(-3.1415, 3.1415, 40, False, 'phi'),
     'mass'        : pcfg(  -0.05,   0.05, 40,  True, 'mass'),
@@ -26,3 +26,42 @@ config = {
     'GenPartFlav' : pcfg(      0,      6, 40, False, 'GenPartFlav'),
 }
 
+truth_pl = {
+            "pt"     : True,
+            "eta"    : True,
+            "phi"    : True,
+            "mass"   : True,
+            "status" : True,
+            "mother" : True,
+            "pdgId"  : True,
+}
+reco_pl = {
+            "pt"          : True,
+            "phi"         : True,
+            "eta"         : True,
+            "dxy"         : True,
+            "dxyErr"      : True,
+            "dz"          : True,
+            "dzErr"       : True,
+            "fBrem"       : True,
+            "ip3d"        : True,
+            "mvaId"       : True,
+            "pfRelIso"    : True,
+            "pfvaId"      : False,
+            "ptBiased"    : True,
+            "sip3d"       : True,
+            "trkRelIso"   : True,
+            "unBiased"    : True,
+            "vx"          : True,
+            "vy"          : True,
+            "vz"          : True,
+            "charge"      : False,
+            "pdgId"       : False,
+            "genPartIdx"  : False,
+            "GenPartFlav" : False,
+            "sxy"         : (lambda x : x.dxyErr / dxy),
+            "sz"          : (lambda x : x.dzErr / dz),
+}
+ 
+
+#config = {}

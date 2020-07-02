@@ -39,12 +39,12 @@ def plotHist(savename,
 
     # plot and postfix overrides
     if vals:
-        packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step')
+        packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step', label=leg)
     elif hists:
         for packed_hist in hists:
             vals, bins, patches = packed_hist
             centers = (bins[1:] + bins[:-1])/2
-            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm, histtype='step')
+            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm, histtype='step', label=leg)
             # plt.hist(x=np.ones_like(vals), weights=vals, bins=bins, log=isLog)
             #plt.hist(data=vals, bins=bins, log=isLog)
         packed=None
@@ -55,7 +55,7 @@ def plotHist(savename,
     sname = sname.replace('//','/')
     if writeTitle: plt.text(-0.1, 1.1, sname, fontsize=6, transform=plt.gca().transAxes)
     
-    if leg: fig.legend(leg)
+    if leg: fig.legend()
     
     # save figs
     pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
@@ -74,6 +74,7 @@ def plotCollection(objs,
                    leg=None,
                    outDir='plots',
                    normAttrs=False,
+                   plotlist=None
                   ):
     if type(objs) is list:
         plotHist("n_"+savename, vals=[ak.num(o) for o in objs], xtitle=xtitle+" multiplicity", leg=leg, outDir=outDir)

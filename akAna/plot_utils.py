@@ -32,7 +32,6 @@ def plotHist(savename,
     fig = plt.figure(figsize=(6,4))
 
     if var in config:
-        print(var+ "is in config")
         nbins = config[var].nbins
         lims = (config[var].lo, config[var].hi)
         isLog = config[var].log
@@ -40,12 +39,12 @@ def plotHist(savename,
 
     # plot and postfix overrides
     if vals:
-        packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm)
+        packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step')
     elif hists:
         for packed_hist in hists:
             vals, bins, patches = packed_hist
             centers = (bins[1:] + bins[:-1])/2
-            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm)
+            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm, histtype='step')
             # plt.hist(x=np.ones_like(vals), weights=vals, bins=bins, log=isLog)
             #plt.hist(data=vals, bins=bins, log=isLog)
         packed=None

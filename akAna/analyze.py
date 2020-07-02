@@ -38,10 +38,23 @@ def analyze(opts, args):
     reco_electrons = cms_events['softElectrons']
     reco_cuts = {
         "all": reco_electrons.pt > -1,
-        "looseMVA": reco_electrons.mvaId > 0 & reco_electrons.pfRelIso < 3 & reco_electrons.sip3d < 500,
-        "tightMVA": reco_electrons.mvaId > 5 & reco_electrons.pfRelIso < 3 & reco_electrons.sip3d < 500,
-        #"dominic_special" : reco_electrons.sip3d < 5,
-        }
+        "looseMVA": reco_electrons.mvaId > 0,
+        "tightMVA": reco_electrons.mvaId > 5,
+        "dominic_special_ip3d"   : ((reco_electrons.sip3d       < 500)    &  
+                                    (reco_electrons.ip3d        < 8)      ),
+        "dominic_special_dxyz"   : ((np.abs(reco_electrons.dz)  < 3)      & 
+                                    (reco_electrons.dzErr       < 0.5)    & 
+                                    (np.abs(reco_electrons.dxy) < 1)      & 
+                                    (reco_electrons.dxyErr      < 0.5)    ),
+        "dominic_special_fBrem"  : reco_electrons.fBrem         > -0.015   ,
+        "dominic_special_Flav"   : reco_electrons.GenPartFlav   > 0.5      , 
+        "dominic_special_mvaId"  : (reco_electrons.mvaId        > -3      ),
+      #                              reco_electrons.mvaId        < 0       ),
+        "dominic_special_pt"     : reco_electrons.pt            > 2        ,
+        "dominic_special_ptBias" : reco_electrons.ptBiased      > 2        ,
+        "dominic_special_trk"    : reco_electrons.trkRelIso     < 10       ,
+        "dominic_special_unBias" : reco_electrons.unBiased      > 2        , 
+    }
     
     if opts.drawRecoElectrons:
         plotCollection(reco_electrons, "recoElectrons", xtitle="recoElectrons", outDir=opts.odir+"/diagnostic/all_reco_eles")    

@@ -8,6 +8,7 @@ import optparse
 from data import getData
 from plot_utils import plotHist, plotCollection, plotEfficiency, combinePDFs
 from truth_utils import truth_link, dr_match
+from plot_config import reco_pl,truth_pl
 
 def analyze(opts, args):
     
@@ -78,11 +79,11 @@ def analyze(opts, args):
             plotCollection(matched_reco,    "matched_reco_ele",  xtitle="matched reco electron"   ,outDir=opts.odir+"/diagnostic/matched_collections/"+cut_name)
             plotCollection(unmatched_reco,  "unmatched_reco_ele",xtitle="unmatched reco electron" ,outDir=opts.odir+"/diagnostic/matched_collections/"+cut_name)
         if opts.drawMatchedTruth:
-            plotCollection([matched_truth,unmatched_truth], cut_name+"_matching_truth", leg=["matched","unmatched"],
+            plotCollection([matched_truth,unmatched_truth], cut_name+"_matching_truth", leg=["matched","unmatched"], plotlist=truth_pl,
                            outDir=opts.odir+"/diagnostic/match_comparison/truth_"+cut_name, normAttrs=True)
         if opts.drawMatchedReco:
-            plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"],
-                           outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name, normAttrs=True)
+            plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"], plotlist=reco_pl,
+                           outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name, normAttrs=True, profile=True)
         
         # display matching efficiencies
         passVals = ak.to_list(ak.flatten(matched_truth.pt))

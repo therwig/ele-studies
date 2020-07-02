@@ -62,6 +62,6 @@ reco_pl = {
             "pdgId"       : False,
             "genPartIdx"  : False,
             "GenPartFlav" : False,
-            "sxy"         : (lambda x : x['dxyErr'] / x['dxy']),
-            "sz"          : (lambda x : x['dzErr'] / x['dz']),
+            "sxy"         : (lambda x : x['dxy'] / x['dxyErr']),
+            "sz"          : (lambda x : x['dz'] / x['dzErr']),
 }

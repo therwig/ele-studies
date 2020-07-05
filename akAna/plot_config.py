@@ -2,6 +2,9 @@ from collections import namedtuple
 
 pcfg = namedtuple('pcfg','lo, hi, nbins, log, profile, name')
 
+def notNone(x):
+    return not (x is None)
+
 config = {
     'pt'          : pcfg(      0,     20, 100, False, False, 'pt [GeV]'),
     'eta'         : pcfg(-3.1415, 3.1415, 100, False, False, 'eta'),

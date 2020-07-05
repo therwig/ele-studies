@@ -40,21 +40,22 @@ def analyze(opts, args):
     reco_cuts = {
         "all": reco_electrons.pt > -1,
         "looseMVA": reco_electrons.mvaId > 0,
-        "tightMVA": reco_electrons.mvaId > 5,
-        "dominic_special_ip3d"   : ((reco_electrons.sip3d       < 500)    &  
-                                    (reco_electrons.ip3d        < 8)      ),
-        "dominic_special_dxyz"   : ((np.abs(reco_electrons.dz)  < 3)      & 
-                                    (reco_electrons.dzErr       < 0.5)    & 
-                                    (np.abs(reco_electrons.dxy) < 1)      & 
-                                    (reco_electrons.dxyErr      < 0.5)    ),
-        "dominic_special_fBrem"  : reco_electrons.fBrem         > -0.015   ,
-        "dominic_special_Flav"   : reco_electrons.GenPartFlav   > 0.5      , 
-        "dominic_special_mvaId"  : (reco_electrons.mvaId        > -3      ),
-      #                              reco_electrons.mvaId        < 0       ),
-        "dominic_special_pt"     : reco_electrons.pt            > 2        ,
-        "dominic_special_ptBias" : reco_electrons.ptBiased      > 2        ,
-        "dominic_special_trk"    : reco_electrons.trkRelIso     < 10       ,
-        "dominic_special_unBias" : reco_electrons.unBiased      > 2        , 
+        "mediumMVA": reco_electrons.mvaId > 2,
+        "tightMVA": reco_electrons.mvaId > 3,
+      #   "dominic_special_ip3d"   : ((reco_electrons.sip3d       < 500)    &  
+      #                               (reco_electrons.ip3d        < 8)      ),
+      #   "dominic_special_dxyz"   : ((np.abs(reco_electrons.dz)  < 3)      & 
+      #                               (reco_electrons.dzErr       < 0.5)    & 
+      #                               (np.abs(reco_electrons.dxy) < 1)      & 
+      #                               (reco_electrons.dxyErr      < 0.5)    ),
+      #   "dominic_special_fBrem"  : reco_electrons.fBrem         > -0.015   ,
+      #   "dominic_special_Flav"   : reco_electrons.GenPartFlav   > 0.5      , 
+      #   "dominic_special_mvaId"  : (reco_electrons.mvaId        > -3      ),
+      # #                              reco_electrons.mvaId        < 0       ),
+      #   "dominic_special_pt"     : reco_electrons.pt            > 2        ,
+      #   "dominic_special_ptBias" : reco_electrons.ptBiased      > 2        ,
+      #   "dominic_special_trk"    : reco_electrons.trkRelIso     < 10       ,
+      #   "dominic_special_unBias" : reco_electrons.unBiased      > 2        , 
     }
     
     if opts.drawRecoElectrons:
@@ -102,7 +103,9 @@ def analyze(opts, args):
         # display matching efficiencies
         passVals = ak.to_list(ak.flatten(matched_truth.pt))
         totVals = ak.to_list(ak.flatten(truth_electrons.pt))
-        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        #eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        # eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,5), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0.5,3), nbins=25, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
         efficiencies[cut_name]=eff
     
         # record number of signal electrons

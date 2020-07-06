@@ -13,7 +13,10 @@ def getData(opts=None):
         if 'dlehner' in user:
             cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
         elif 'herwig' in user:
-            cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
+            if opts.bigInput:
+                cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
+            else:
+                cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/orig_nanoAOD.root")["Events"].arrays()
         else:
             raise Exception("Must set data directory for user: {}!".format(user))
     cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}

@@ -44,10 +44,10 @@ def plotHist(savename,
         packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step', label=leg)
         print('doing',nbins, lims)
     elif hists:
-        for packed_hist in hists:
+        for ihist, packed_hist in enumerate(hists):
             vals, bins, patches = packed_hist
             centers = (bins[1:] + bins[:-1])/2
-            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm, histtype='step', label=leg)
+            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm, histtype='step', label=leg[ihist])
             # plt.hist(x=np.ones_like(vals), weights=vals, bins=bins, log=isLog)
             #plt.hist(data=vals, bins=bins, log=isLog)
         packed=None

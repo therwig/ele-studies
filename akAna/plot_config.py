@@ -11,7 +11,7 @@ config = {
     'dxyErr'      : pcfg(      0,     10, 100, False, False, 'dxy Error [mm]'),
     'dz'          : pcfg(     -1,      1, 100, False, False, 'dz [mm]'),
     'dzErr'       : pcfg(      0,      5, 100, False, False, 'dz Error [mm]'),
-    'fBrem'       : pcfg(     -1,      0, 100, False, False, 'fBrem'),
+    'fBrem'       : pcfg(      0,      1, 100, False, False, 'fBrem'),
     'ptBiased'    : pcfg(     -5,     20, 100, False, False, 'ptBiased'),
     'unBiased'    : pcfg(     -4,     10, 100, False, False, 'unBiased'),
     'ip3d'        : pcfg(      0,     25, 100, False, False, 'ip3d'),

@@ -9,7 +9,7 @@ from math import ceil
 import pathlib
 import os
 
-from plot_config import config
+from plot_config import config,notNone
 
 pdflist=[]
 
@@ -33,14 +33,16 @@ def plotHist(savename,
     fig = plt.figure(figsize=(6,4))
 
     if var in config:
-        if config[var].nbins: nbins = config[var].nbins
-        if config[var].lo and config[var].hi: lims = (config[var].lo, config[var].hi)
-        if config[var].log: isLog = config[var].log
-        if config[var].name: xtitle = config[var].name
+        if notNone(config[var].nbins): nbins = config[var].nbins
+        if notNone(config[var].lo) and notNone(config[var].hi): lims = (config[var].lo, config[var].hi)
+        if notNone(config[var].log): isLog = config[var].log
+        if notNone(config[var].name): xtitle = config[var].name
+        #print('for var '+var+' setting',config[var].nbins,config[var].lo, config[var].hi)
 
     # plot and postfix overrides
     if vals:
         packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step', label=leg)
+        print('doing',nbins, lims)
     elif hists:
         for packed_hist in hists:
             vals, bins, patches = packed_hist

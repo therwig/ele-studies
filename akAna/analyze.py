@@ -132,6 +132,7 @@ if __name__ == "__main__":
     parser = optparse.OptionParser()
     parser.add_option('-i',"--input", type="string", default = '', help="path to input file")
     parser.add_option('-o',"--odir", type="string", default = 'output_plots/', help="plots directory")
+    parser.add_option('-b',"--bigInput", action='store_true', default = False, help="use large input file")
     parser.add_option("--drawInputHistograms", action='store_true', default = False, help="histogram ALL input collections")
     parser.add_option("--drawTruthElectrons", action='store_true', default = False, help="histogram selected truth electrons")
     parser.add_option("--drawRecoElectrons", action='store_true', default = False, help="histogram selected reco electrons")

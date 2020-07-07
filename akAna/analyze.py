@@ -91,8 +91,10 @@ def analyze(opts, args):
             plotCollection([matched_truth,unmatched_truth], cut_name+"_matching_truth", leg=["matched","unmatched"], plotlist=truth_pl,
                            outDir=opts.odir+"/diagnostic/match_comparison/truth_"+cut_name, normAttrs=True)
         if opts.drawMatchedReco:
+            normalizeVars = False
+            if cut_name == "all": normalizeVars = True
             plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"], plotlist=reco_pl,
-                           outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name, normAttrs=True, profile=True)
+                           outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name, normAttrs=normalizeVars, profile=True)
         
         # display matching efficiencies
         passVals = ak.to_list(ak.flatten(matched_truth.pt))

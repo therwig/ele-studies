@@ -42,7 +42,6 @@ def plotHist(savename,
     # plot and postfix overrides
     if vals:
         packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step', label=leg)
-        print('doing',nbins, lims)
     elif hists:
         for ihist, packed_hist in enumerate(hists):
             vals, bins, patches = packed_hist

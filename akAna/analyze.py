@@ -38,25 +38,17 @@ def analyze(opts, args):
     #reco_electrons = cms_events['electrons']
     reco_electrons = cms_events['softElectrons']
     reco_cuts = {
+        # "all": (lambda x : x.pt > -1),
         "all": reco_electrons.pt > -1,
-        "looseMVA": reco_electrons.mvaId > 0,
-        "mediumMVA": reco_electrons.mvaId > 2,
-        "tightMVA": reco_electrons.mvaId > 3,
-      #   "dominic_special_ip3d"   : ((reco_electrons.sip3d       < 500)    &  
-      #                               (reco_electrons.ip3d        < 8)      ),
-      #   "dominic_special_dxyz"   : ((np.abs(reco_electrons.dz)  < 3)      & 
-      #                               (reco_electrons.dzErr       < 0.5)    & 
-      #                               (np.abs(reco_electrons.dxy) < 1)      & 
-      #                               (reco_electrons.dxyErr      < 0.5)    ),
-      #   "dominic_special_fBrem"  : reco_electrons.fBrem         > -0.015   ,
-      #   "dominic_special_Flav"   : reco_electrons.GenPartFlav   > 0.5      , 
-      #   "dominic_special_mvaId"  : (reco_electrons.mvaId        > -3      ),
-      # #                              reco_electrons.mvaId        < 0       ),
-      #   "dominic_special_pt"     : reco_electrons.pt            > 2        ,
-      #   "dominic_special_ptBias" : reco_electrons.ptBiased      > 2        ,
-      #   "dominic_special_trk"    : reco_electrons.trkRelIso     < 10       ,
-      #   "dominic_special_unBias" : reco_electrons.unBiased      > 2        , 
+        "presel": ((np.abs(reco_electrons.dxy)< 0.1 ) &
+                   (np.abs(reco_electrons.dz) < 15 ) & 
+                   (reco_electrons.ip3d < 5 ) &
+                   (reco_electrons.trkRelIso < 2 )
+                  ),
     }
+    reco_cuts["presel"] = reco_cuts["presel"] & (reco_electrons.mvaId>-1)
+    reco_cuts["presel"] = reco_cuts["presel"] & (reco_electrons.ptBiased>-1)
+    reco_cuts["dom_special_sip3d"] = reco_cuts["presel"] & (reco_electrons.sip3d<200)
     
     if opts.drawRecoElectrons:
         plotCollection(reco_electrons, "recoElectrons", xtitle="recoElectrons", outDir=opts.odir+"/diagnostic/all_reco_eles")    
@@ -65,9 +57,11 @@ def analyze(opts, args):
     evt_mask = ak.num(truth_electrons)==2
     
     efficiencies={}
+    efficiencies_lo={}
     nFakes={}
     for cut_name in reco_cuts:
-        reco_mask = reco_cuts[cut_name]
+        reco_mask = reco_cuts[cut_name] #(reco_electrons)
+        # reco_mask = reco_cuts[cut_name]
         signal_electrons = reco_electrons[reco_mask]
 
         debugMatching=False
@@ -103,10 +97,10 @@ def analyze(opts, args):
         # display matching efficiencies
         passVals = ak.to_list(ak.flatten(matched_truth.pt))
         totVals = ak.to_list(ak.flatten(truth_electrons.pt))
-        #eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
-        # eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,5), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
-        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0.5,3), nbins=25, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,10), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        eff_lo = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0.6,3), nbins=12, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
         efficiencies[cut_name]=eff
+        efficiencies_lo[cut_name]=eff_lo
     
         # record number of signal electrons
         nfakes = ak.num(signal_electrons) - ak.num(matched_reco)
@@ -115,6 +109,11 @@ def analyze(opts, args):
     
     plotEfficiency("eff_pt",
                    effs=[efficiencies[cut] for cut in reco_cuts],
+                   leg=[cut for cut in reco_cuts],
+                   xtitle="truth electron p_T [GeV]",
+                   outDir=opts.odir+"/final_comparisons")
+    plotEfficiency("effLo_pt",
+                   effs=[efficiencies_lo[cut] for cut in reco_cuts],
                    leg=[cut for cut in reco_cuts],
                    xtitle="truth electron p_T [GeV]",
                    outDir=opts.odir+"/final_comparisons")

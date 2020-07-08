@@ -41,22 +41,24 @@ def analyze(opts, args):
         "all": reco_electrons.pt > -1,
         "looseMVA": reco_electrons.mvaId > 0,
         "tightMVA": reco_electrons.mvaId > 5,
-        "dominic_special_ip3d"   :((reco_electrons.sip3d       < 1000)   &
-                                   (reco_electrons.ip3d        < 8)      ),
-        "dominic_special_dxyz"   :((np.abs(reco_electrons.dz)  < 0.1)    & 
-                                   (reco_electrons.dzErr       < 0.5)    & 
-                                   (np.abs(reco_electrons.dxy) < 0.05)   & 
-                                   (reco_electrons.dxyErr      < 0.5)    ),
- #      "dominic_special_fBrem"  :  reco_electrons.fBrem       > - ,
-        "dominic_special_Flav"   :  reco_electrons.GenPartFlav < 0.5     , 
-        "dominic_special_mvaId"  :((reco_electrons.mvaId       > 2.5)    &
-                                   (reco_electrons.mvaId       < 20)     ),
- #      "dominic_special_pt"     :  reco_electrons.pt          > - ,
-        "dominic_special_ptBias" :((reco_electrons.ptBiased    > 2.5)    &
-                                   (reco_electrons.ptBiased    < 20)     ),
- #      "dominic_special_trk"    :  reco_electrons.trkRelIso   < - ,
-        "dominic_special_unBias" :((reco_electrons.unBiased    > 0)      &
-                                   (reco_electrons.unBiased    < 5)      ), 
+        "dominic_special_ip3d"   :((reco_electrons.sip3d       < 2.5)     &
+                                   (reco_electrons.ip3d        < 0.2)     ),
+        "dominic_special_dxyz"   :((np.abs(reco_electrons.dz)  < 0.025)   & 
+                                   (reco_electrons.dzErr       < 0.025)   & 
+                                   (np.abs(reco_electrons.dxy) < 0.025)   & 
+                                   (reco_electrons.dxyErr      < 0.012)   ),
+        "dominic_special_fBrem"  :((reco_electrons.fBrem       > 0.15)    &
+                                   (reco_electrons.fBrem       < 0.6)     ), 
+        "dominic_special_Flav"   : (reco_electrons.GenPartFlav < 1)       , 
+        "dominic_special_mvaId"  :((reco_electrons.mvaId       > 2.5)     &
+                                   (reco_electrons.mvaId       < 20.1)    ),
+        "dominic_special_pt"     : (reco_electrons.pt          > 2)       ,
+        "dominic_special_ptBias" :((reco_electrons.ptBiased    > 2.5)     &
+                                   (reco_electrons.ptBiased    < 20.1)    ),
+        "dominic_special_trk"    :((reco_electrons.trkRelIso   > 0.03125) &
+                                   (reco_electrons.trkRelIso   < 0.5)     ),
+        "dominic_special_unBias" :((reco_electrons.unBiased    > 2.5)     &
+                                   (reco_electrons.unBiased    < 20.1)    ), 
     }
     
     if opts.drawRecoElectrons:

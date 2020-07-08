@@ -37,17 +37,13 @@ def analyze(opts, args):
     # DEFINE THE RECO ELECTRONS        
     #reco_electrons = cms_events['electrons']
     reco_electrons = cms_events['softElectrons']
-    reco_cuts = {
-        # "all": (lambda x : x.pt > -1),
-        "all": reco_electrons.pt > -1,
-        "presel": ((np.abs(reco_electrons.dxy)< 0.1 ) &
-                   (np.abs(reco_electrons.dz) < 15 ) & 
-                   (reco_electrons.ip3d < 5 ) &
-                   (reco_electrons.trkRelIso < 2 )
-                  ),
-    }
-    reco_cuts["presel"] = reco_cuts["presel"] & (reco_electrons.mvaId>-1)
-    reco_cuts["presel"] = reco_cuts["presel"] & (reco_electrons.ptBiased>-1)
+    reco_cuts = {}
+    reco_cuts["all"] = (reco_electrons.pt > 2) & (reco_electrons.pt < 4) 
+    reco_cuts["presel"] = (reco_cuts["all"] & 
+                           (np.abs(reco_electrons.dxy)< 0.1 ) & (np.abs(reco_electrons.dz) < 15 ) & 
+                           (reco_electrons.ip3d < 5 ) & (reco_electrons.trkRelIso < 2 ) &
+                           (reco_electrons.mvaId>-1) & (reco_electrons.ptBiased>-1)
+                          )
     reco_cuts["dom_special_sip3d"] = reco_cuts["presel"] & (reco_electrons.sip3d<200)
     
     if opts.drawRecoElectrons:

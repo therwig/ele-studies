@@ -8,6 +8,7 @@ import optparse
 from data import getData
 from plot_utils import plotHist, plotCollection, plotEfficiency, combinePDFs
 from truth_utils import truth_link, dr_match
+from plot_config import reco_pl,truth_pl
 
 def analyze(opts, args):
     
@@ -37,10 +38,17 @@ def analyze(opts, args):
     #reco_electrons = cms_events['electrons']
     reco_electrons = cms_events['softElectrons']
     reco_cuts = {
+        # "all": (lambda x : x.pt > -1),
         "all": reco_electrons.pt > -1,
-        "looseMVA": reco_electrons.mvaId > 0,
-        "tightMVA": reco_electrons.mvaId > 5,
-        }
+        "presel": ((np.abs(reco_electrons.dxy)< 0.1 ) &
+                   (np.abs(reco_electrons.dz) < 15 ) & 
+                   (reco_electrons.ip3d < 5 ) &
+                   (reco_electrons.trkRelIso < 2 )
+                  ),
+    }
+    reco_cuts["presel"] = reco_cuts["presel"] & (reco_electrons.mvaId>-1)
+    reco_cuts["presel"] = reco_cuts["presel"] & (reco_electrons.ptBiased>-1)
+    reco_cuts["dom_special_sip3d"] = reco_cuts["presel"] & (reco_electrons.sip3d<200)
     
     if opts.drawRecoElectrons:
         plotCollection(reco_electrons, "recoElectrons", xtitle="recoElectrons", outDir=opts.odir+"/diagnostic/all_reco_eles")    
@@ -49,17 +57,20 @@ def analyze(opts, args):
     evt_mask = ak.num(truth_electrons)==2
     
     efficiencies={}
+    efficiencies_lo={}
     nFakes={}
     for cut_name in reco_cuts:
-        reco_mask = reco_cuts[cut_name]
+        reco_mask = reco_cuts[cut_name] #(reco_electrons)
+        # reco_mask = reco_cuts[cut_name]
         signal_electrons = reco_electrons[reco_mask]
-        
-        match_builder = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=False)
+
+        debugMatching=False
+        match_builder = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=False, debug=debugMatching)
         match_extension = match_builder.snapshot()
         matching_truth_mask = match_extension.truth_to_reco_index >= 0
         # matching_reco_mask = match_extension.truth_to_reco_index[matching_truth_mask]
     
-        match_builderR = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=True)
+        match_builderR = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=True, debug=debugMatching)
         match_extensionR = match_builderR.snapshot()
         matching_reco_mask = match_extensionR.reco_to_truth_index >= 0
         nonmatching_reco_mask = match_extensionR.reco_to_truth_index < 0
@@ -77,17 +88,21 @@ def analyze(opts, args):
             plotCollection(matched_reco,    "matched_reco_ele",  xtitle="matched reco electron"   ,outDir=opts.odir+"/diagnostic/matched_collections/"+cut_name)
             plotCollection(unmatched_reco,  "unmatched_reco_ele",xtitle="unmatched reco electron" ,outDir=opts.odir+"/diagnostic/matched_collections/"+cut_name)
         if opts.drawMatchedTruth:
-            plotCollection([matched_truth,unmatched_truth], cut_name+"_matching_truth", leg=["matched","unmatched"],
+            plotCollection([matched_truth,unmatched_truth], cut_name+"_matching_truth", leg=["matched","unmatched"], plotlist=truth_pl,
                            outDir=opts.odir+"/diagnostic/match_comparison/truth_"+cut_name, normAttrs=True)
         if opts.drawMatchedReco:
-            plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"],
-                           outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name, normAttrs=True)
+            normalizeVars = False
+            if cut_name == "all": normalizeVars = True
+            plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"], plotlist=reco_pl,
+                           outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name, normAttrs=normalizeVars, profile=True)
         
         # display matching efficiencies
         passVals = ak.to_list(ak.flatten(matched_truth.pt))
         totVals = ak.to_list(ak.flatten(truth_electrons.pt))
-        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,20), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,10), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        eff_lo = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0.6,3), nbins=12, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
         efficiencies[cut_name]=eff
+        efficiencies_lo[cut_name]=eff_lo
     
         # record number of signal electrons
         nfakes = ak.num(signal_electrons) - ak.num(matched_reco)
@@ -96,6 +111,11 @@ def analyze(opts, args):
     
     plotEfficiency("eff_pt",
                    effs=[efficiencies[cut] for cut in reco_cuts],
+                   leg=[cut for cut in reco_cuts],
+                   xtitle="truth electron p_T [GeV]",
+                   outDir=opts.odir+"/final_comparisons")
+    plotEfficiency("effLo_pt",
+                   effs=[efficiencies_lo[cut] for cut in reco_cuts],
                    leg=[cut for cut in reco_cuts],
                    xtitle="truth electron p_T [GeV]",
                    outDir=opts.odir+"/final_comparisons")
@@ -114,6 +134,7 @@ if __name__ == "__main__":
     parser = optparse.OptionParser()
     parser.add_option('-i',"--input", type="string", default = '', help="path to input file")
     parser.add_option('-o',"--odir", type="string", default = 'output_plots/', help="plots directory")
+    parser.add_option('-b',"--bigInput", action='store_true', default = False, help="use large input file")
     parser.add_option("--drawInputHistograms", action='store_true', default = False, help="histogram ALL input collections")
     parser.add_option("--drawTruthElectrons", action='store_true', default = False, help="histogram selected truth electrons")
     parser.add_option("--drawRecoElectrons", action='store_true', default = False, help="histogram selected reco electrons")

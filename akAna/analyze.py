@@ -6,19 +6,26 @@ import os
 import optparse
 
 from data import getData
-from plot_utils import plotHist, plotCollection, plotEfficiency, combinePDFs
+from plot_utils import plotHist, plotCollection, plotEfficiency, plotROC, plotGraphs, combinePDFs
 from truth_utils import truth_link, dr_match
 from plot_config import reco_pl,truth_pl
 
 def analyze(opts, args):
     
     cms_events = getData(opts)
+    nEvents=len(cms_events)
             
     # histogram all attributes for input quantities
     if opts.drawInputHistograms:
         for collection in cms_events.columns:
             plotCollection(cms_events[collection], collection, xtitle=collection, outDir=opts.odir+"/diagnostic/input_collections")    
-    
+
+    # common ficucial region selection
+    pt_truth_lo = 2.5
+    pt_truth_hi = 4.5
+    pt_reco_lo = 2
+    pt_reco_hi = 5
+            
     # DEFINE THE TRUTH ELECTRONS        
     # derived array with extra truth information
     truth_builder = truth_link(cms_events['genParticles'], ak.ArrayBuilder())
@@ -30,21 +37,49 @@ def analyze(opts, args):
     n2_mask = truth_extension['motherPdgId'] == 1000023
     gen_ele_mask = ele_mask & (z_mask | n2_mask) & last_mask
     truth_electrons = cms_events['genParticles'][gen_ele_mask]
+    # fiducial region selection
+    truth_electrons = truth_electrons[ (truth_electrons.pt > pt_truth_lo) & (truth_electrons.pt < pt_truth_hi) ]
     
     if opts.drawTruthElectrons:
         plotCollection(truth_electrons, "genElectrons", xtitle="genElectrons", outDir=opts.odir+"/diagnostic/all_truth_eles")    
     
-    # DEFINE THE RECO ELECTRONS        
+    # DEFINE THE RECO ELECTRONS
     #reco_electrons = cms_events['electrons']
     reco_electrons = cms_events['softElectrons']
     reco_cuts = {}
-    reco_cuts["all"] = (reco_electrons.pt > 2) & (reco_electrons.pt < 4) 
+    reco_cuts["all"] = (reco_electrons.pt > pt_reco_lo) & (reco_electrons.pt < pt_reco_hi) 
     reco_cuts["presel"] = (reco_cuts["all"] & 
                            (np.abs(reco_electrons.dxy)< 0.1 ) & (np.abs(reco_electrons.dz) < 15 ) & 
                            (reco_electrons.ip3d < 5 ) & (reco_electrons.trkRelIso < 2 ) &
                            (reco_electrons.mvaId>-1) & (reco_electrons.ptBiased>-1)
                           )
     reco_cuts["dom_special_sip3d"] = reco_cuts["presel"] & (reco_electrons.sip3d<200)
+
+    # Direct which ROCs to produce for each variable
+    # also must describe what values are 'signal-like' (hi, low,
+    # low absolute value [abslo], or high absolute values [abshi] )
+    roc_config = {
+        "all": {
+            'dxy'         : "abslo",
+            'dz'          : "abslo",
+            'ip3d'        : "abslo",
+            'sip3d'       : "lo",
+            'trkRelIso'   : "lo",
+            'mvaId'       : "hi",
+            'ptBiased'    : "hi",
+            'unBiased'    : "hi",
+            },
+        "presel": {
+            'dxy'         : "abslo",
+            'dz'          : "abslo",
+            'ip3d'        : "abslo",
+            'sip3d'       : "lo",
+            'trkRelIso'   : "lo",
+            'mvaId'       : "hi",
+            'ptBiased'    : "hi",
+            'unBiased'    : "hi",
+            },
+    }
     
     if opts.drawRecoElectrons:
         plotCollection(reco_electrons, "recoElectrons", xtitle="recoElectrons", outDir=opts.odir+"/diagnostic/all_reco_eles")    
@@ -92,10 +127,27 @@ def analyze(opts, args):
             if cut_name == "all": normalizeVars = True
             plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"], plotlist=reco_pl,
                            outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name, normAttrs=normalizeVars, profile=True)
+            if cut_name in roc_config:
+                maxeff = ak.count(truth_electrons)
+                if maxeff: maxeff = ak.count(matched_truth) / maxeff
+                rocs={}
+                for var in roc_config[cut_name]:
+                    signal = ak.to_numpy(ak.flatten(matched_reco[var]))
+                    background = ak.to_numpy(ak.flatten(unmatched_reco[var]))
+                    roc = plotROC(var, signal, background, maxeff=maxeff, nEvts=nEvents, signalLike=roc_config[cut_name][var],
+                            outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name+"/roc")
+                    rocs[var]=roc
+                plotGraphs("overlay_1d", [rocs[v] for v in rocs], leg=[v for v in rocs],
+                           xtitle="Efficiency", ytitle="Fake multiplicity per evt",
+                           outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name+"/roc")
+                # passVals = ak.to_numpy(ak.flatten(matched_truth.pt))
+                # totVals = ak.to_numpy(ak.flatten(truth_electrons.pt))
+                # roc_cfg=roc_config[cut_name]
+                # normalizeVars = False
         
         # display matching efficiencies
-        passVals = ak.to_list(ak.flatten(matched_truth.pt))
-        totVals = ak.to_list(ak.flatten(truth_electrons.pt))
+        passVals = ak.to_numpy(ak.flatten(matched_truth.pt))
+        totVals = ak.to_numpy(ak.flatten(truth_electrons.pt))
         eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,10), nbins=20,
                              xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
         eff_lo = plotEfficiency("eff_pt_lo_"+cut_name, passVals=passVals, totVals=totVals, lims=(0.6,3), nbins=12,

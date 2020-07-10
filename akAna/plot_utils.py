@@ -1,4 +1,5 @@
 import numpy as np
+import numba
 import matplotlib
 matplotlib.use('PDF')
 import matplotlib.pyplot as plt
@@ -46,6 +47,10 @@ def plotHist(savename,
         if type(leg)!=list: leg = [leg]
         means = tuple([np.mean(v) for v in vals])
         if showMean: leg = [l+" (mean={:.2g})".format(means[i]) for i,l in enumerate(leg)]
+        if lims is not None: # overflow
+            eps = 0.5 * (lims[1]-lims[0])/nbins
+            for iv in range(len(vals)):
+                vals[iv] = np.maximum(np.minimum(vals[iv],lims[1]-eps), lims[0]+eps)
         packed_hist = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step', label=leg)
         stats = (means,)
         packed = packed_hist, stats
@@ -179,6 +184,7 @@ def plotCollection(objs,
 def ErrDivide(p,n, lvl=0.68):
     if n < p: raise Exception("ErrDivide: Pass greater than total!")
     if n<0 or p<0: raise Exception("ErrDivide: Negative yields!")
+    if n==0: return 0,0,0 # no data
     r = p/n
     a=p+1 # p + alpha
     b=(n-p)+1 # n-p + bets
@@ -199,7 +205,7 @@ def plotEfficiency(savename,
 
     fig = plt.figure(figsize=(6,4))
     
-    if passVals and totVals:
+    if notNone(passVals) and notNone(totVals):
         if lims==None: lims = (totVals.min(),totVals.max())
         bin_edges = np.linspace(lims[0],lims[1],nbins+1)
         bin_centers = (bin_edges[:-1] + bin_edges[1:])/2.
@@ -231,6 +237,166 @@ def plotEfficiency(savename,
     plt.close()
 
     return packed
+
+@numba.jit
+def countBelow(vals, lims):
+    counts = np.zeros_like(lims) #, dtype=int)
+
+    i=0
+    n = len(vals)
+    li=0
+    nlim=len(lims)
+    
+    while(i < n):
+        #print(i,", lim index",li,"lim",lims[li],"counts[lim index]",counts[li])
+        #if vals[i] < lims[li]:
+        if vals[i] <= lims[li]:
+            # fill this entry
+            counts[li] += 1
+        elif li < nlim-1:
+            # increment and try again
+            li += 1
+            i -= 1
+        else:
+            # fill last entry
+            counts[li] += 1
+        i += 1
+    
+    return counts
+
+def plotGraphs(savename,
+               gs,
+               outDir='plots',
+               xtitle='',
+               ytitle='',
+               isLog=False,
+               leg=None,
+               writeTitle=True,
+               formats=['pdf']):
+
+    fig = plt.figure(figsize=(6,4))
+    
+    for ig,g in enumerate(gs):
+        x, y = g
+        plt.plot(x,y, '.-', label=(leg[ig] if notNone(leg) else None))
+
+    plt.xlabel(xtitle)
+    plt.ylabel(ytitle)
+    if notNone(leg): fig.legend()
+
+    sname="{}/{}".format(outDir,savename)
+    sname = sname.replace('//','/')
+    if writeTitle: plt.text(-0.1, 1.1, sname, fontsize=6, transform=plt.gca().transAxes)
+    
+    pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
+    global pdflist
+    for form in formats:
+        snames=sname+"."+form
+        plt.savefig(snames)
+        print("Saved: "+snames)
+        if form=='pdf': pdflist.append(snames)
+    plt.close()
+
+
+def plotROC(savename,
+            signal,
+            background,
+            maxeff=1.0,
+            nEvts=None,
+            signalLike="lo",
+            outDir='plots',
+            nsamples=20+1,
+            eff_lims=None,
+            isLog=False,
+            leg=None,
+            writeTitle=True,
+            formats=['pdf']):
+    if nEvts==None: raise Exception("plotROC must pass nEvents!")
+    
+    s = signal
+    b = background
+    if 'abs' in signalLike:
+        s=np.abs(s)
+        b=np.abs(b)
+
+    effs = np.linspace(0,1,nsamples) #[1:-1] # will fill the endpoints ourselves?
+    eff_vals = np.quantile(s, effs)
+    b = np.sort(b)
+    # low is background-like, high is signal-like
+    nfakes = countBelow(b,eff_vals)
+    nf = len(nfakes)
+    if "hi" in signalLike:
+        effs = effs[::-1] # high=good means low values are very efficiency
+        for i in range(2,nf+1):
+            ind = nf-i # nf-2, nf-3, ..., 1, 0
+            nfakes[ind] += nfakes[ind+1] # add fakes passing tighter cuts
+    elif "lo" in signalLike:
+        for i in range(1,nf):
+            nfakes[i] += nfakes[i-1] # add fakes passing tighter cuts
+    else:
+        print("ROC Warning! not sure whether lo or hi values are good!")
+    
+    # add tightest/loosest points (in case background extends beyond signal)
+    minval = np.minimum(eff_vals[0], b[0])
+    maxval = np.maximum(eff_vals[-1], b[-1])
+    if "hi" in signalLike:
+        effs = np.concatenate(([1],effs,[0]))
+        nfakes = np.concatenate(([len(b)],nfakes,[0]))
+    else:
+        effs = np.concatenate(([0],effs,[1]))
+        nfakes = np.concatenate(([0],nfakes,[len(b)]))
+    eff_vals = np.concatenate(([minval],eff_vals,[maxval]))
+
+    # rescale by the preselection efficiency and to get per-evt fakes
+    effs *= maxeff
+    nfakes /= nEvts
+
+    sname="{}/{}".format(outDir,savename)
+    snameCut="{}_cut/{}".format(outDir,savename)
+    sname = sname.replace('//','/')
+    snameCut = snameCut.replace('//','/')
+
+    plt.plot(effs, nfakes, '.-')
+    if writeTitle: plt.text(-0.1, 1.1, sname, fontsize=6, transform=plt.gca().transAxes)
+    plt.xlabel('Efficiency')
+    plt.ylabel('Fake multiplicity per evt')
+    pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(outDir+"_cuts").mkdir(parents=True, exist_ok=True)
+    global pdflist
+    for form in formats:
+        snames=sname+"."+form
+        plt.savefig(snames)
+        print("Saved: "+snames)
+        if form=='pdf': pdflist.append(snames)
+    plt.close()
+
+    plt.plot(eff_vals, nfakes, '*-')
+    if writeTitle: plt.text(-0.1, 1.1, snameCut, fontsize=6, transform=plt.gca().transAxes)
+    plt.xlabel('Cut value')
+    plt.ylabel('Fake multiplicity per evt')
+    pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
+    for form in formats:
+        sname="{}_cuts/{}_b.{}".format(outDir,savename,form)
+        sname = sname.replace('//','/')
+        plt.savefig(sname)
+        print("Saved: "+sname)
+        if form=='pdf': pdflist.append(sname)
+    plt.close()
+    
+    plt.plot(eff_vals, effs, '*-')
+    if writeTitle: plt.text(-0.1, 1.1, snameCut, fontsize=6, transform=plt.gca().transAxes)
+    plt.xlabel('Cut value')
+    plt.ylabel('Signal efficiency')
+    pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
+    for form in formats:
+        sname="{}_cuts/{}_s.{}".format(outDir,savename,form)
+        sname = sname.replace('//','/')
+        plt.savefig(sname)
+        print("Saved: "+sname)
+        if form=='pdf': pdflist.append(sname)
+    plt.close()
+    
+    return effs, nfakes
 
 def combinePDFs(outname='latest'):
     '''

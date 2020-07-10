@@ -55,6 +55,7 @@ def analyze(opts, args):
     efficiencies={}
     efficiencies_lo={}
     nFakes={}
+    nFakes_lo={}
     for cut_name in reco_cuts:
         reco_mask = reco_cuts[cut_name] #(reco_electrons)
         # reco_mask = reco_cuts[cut_name]
@@ -95,15 +96,21 @@ def analyze(opts, args):
         # display matching efficiencies
         passVals = ak.to_list(ak.flatten(matched_truth.pt))
         totVals = ak.to_list(ak.flatten(truth_electrons.pt))
-        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,10), nbins=20, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
-        eff_lo = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0.6,3), nbins=12, xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        eff = plotEfficiency("eff_pt_"+cut_name, passVals=passVals, totVals=totVals, lims=(0,10), nbins=20,
+                             xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
+        eff_lo = plotEfficiency("eff_pt_lo_"+cut_name, passVals=passVals, totVals=totVals, lims=(0.6,3), nbins=12,
+                                xtitle="truth electron p_T [GeV]", outDir=opts.odir+"/efficiencies")[0]
         efficiencies[cut_name]=eff
         efficiencies_lo[cut_name]=eff_lo
     
         # record number of signal electrons
         nfakes = ak.num(signal_electrons) - ak.num(matched_reco)
-        fakes = plotHist("n_signalElectrons_"+cut_name, vals=nfakes, xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes", lims=(-0.5,159.5), nbins=80)
+        fakes = plotHist("n_signalElectrons_"+cut_name, vals=nfakes, lims=(-0.5,159.5), nbins=80,
+                         xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes")
+        fakes_lo = plotHist("n_signalElectrons_lo_"+cut_name, vals=nfakes, lims=(-0.5,19.5), nbins=20,
+                            xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes")
         nFakes[cut_name]=fakes
+        nFakes_lo[cut_name]=fakes_lo
     
     plotEfficiency("eff_pt",
                    effs=[efficiencies[cut] for cut in reco_cuts],
@@ -117,7 +124,12 @@ def analyze(opts, args):
                    outDir=opts.odir+"/final_comparisons")
     plotHist("nfakes",
              hists=[nFakes[cut] for cut in reco_cuts],
-             leg=[cut for cut in reco_cuts],
+             leg=[cut for cut in reco_cuts], showMean=True,
+             xtitle="fake multiplicity",
+             outDir=opts.odir+"/final_comparisons")
+    plotHist("nfakesLo",
+             hists=[nFakes_lo[cut] for cut in reco_cuts],
+             leg=[cut for cut in reco_cuts], showMean=True,
              xtitle="fake multiplicity",
              outDir=opts.odir+"/final_comparisons")
         

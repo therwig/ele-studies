@@ -27,6 +27,7 @@ def plotHist(savename,
              outDir='plots',
              leg=None,
              writeTitle=True,
+             showMean=False,
              formats=['pdf']
             ):
 
@@ -37,18 +38,25 @@ def plotHist(savename,
         if notNone(config[var].lo) and notNone(config[var].hi): lims = (config[var].lo, config[var].hi)
         if notNone(config[var].log): isLog = config[var].log
         if notNone(config[var].name): xtitle = config[var].name
-        #print('for var '+var+' setting',config[var].nbins,config[var].lo, config[var].hi)
 
     # plot and postfix overrides
     if vals:
-        packed = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step', label=leg)
+        if type(vals)!=list: vals = [vals]
+        if leg is None: leg = ["" for v in vals]
+        if type(leg)!=list: leg = [leg]
+        means = tuple([np.mean(v) for v in vals])
+        if showMean: leg = [l+" (mean={:.2g})".format(means[i]) for i,l in enumerate(leg)]
+        packed_hist = plt.hist(vals, nbins, range=lims, log=isLog, density=norm, histtype='step', label=leg)
+        stats = (means,)
+        packed = packed_hist, stats
     elif hists:
-        for ihist, packed_hist in enumerate(hists):
+        for ihist, packed in enumerate(hists):
+            packed_hist, stats = packed
             vals, bins, patches = packed_hist
             centers = (bins[1:] + bins[:-1])/2
-            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm, histtype='step', label=leg[ihist])
-            # plt.hist(x=np.ones_like(vals), weights=vals, bins=bins, log=isLog)
-            #plt.hist(data=vals, bins=bins, log=isLog)
+            lab = leg[ihist]
+            if showMean: lab += " (mean={:.2g})".format(stats[0][0]) # first 0 is mean
+            plt.hist(x=centers, weights=vals, bins=bins, log=isLog, density=norm, histtype='step', label=lab)
         packed=None
     plt.xlabel(xtitle)
     plt.ylabel(ytitle)
@@ -156,7 +164,9 @@ def plotCollection(objs,
         if type(pltFunc) is bool:
             if not pltFunc: continue
             pltFunc = lambda x : x[attr]
-        plotHist(savename+'_'+attr, var=attr, vals=[ak.to_list(ak.flatten(pltFunc(o))) for o in objs], xtitle=xtitle+" "+attr, leg=leg, outDir=outDir, norm=normAttrs)
+            
+        vals_to_plot = [ak.to_numpy(ak.flatten(pltFunc(o))) for o in objs]
+        plotHist(savename+'_'+attr, var=attr, vals=vals_to_plot, xtitle=xtitle+" "+attr, leg=leg, outDir=outDir, norm=normAttrs)
 
         #break # to just plot one thing
         if profile and (attr in config) and (config[attr].profile):

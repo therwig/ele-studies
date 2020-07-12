@@ -44,8 +44,18 @@ def analyze(opts, args):
                            (reco_electrons.ip3d < 5 ) & (reco_electrons.trkRelIso < 2 ) &
                            (reco_electrons.mvaId>-1) & (reco_electrons.ptBiased>-1)
                           )
-    reco_cuts["dom_special_sip3d"] = reco_cuts["presel"] & (reco_electrons.sip3d<200)
-    
+    #reco_cuts["doptimization_1"] = (reco_cuts["presel"] & 
+    #                                (np.abs(reco_electrons.dxy) < 0.025 ) &
+    #                                (np.abs(reco_electrons.dz) < 0.1 ) &
+    #                                (reco_electrons.ip3d < 2 ) &
+    #                                (reco_electrons.mvaId > 2.5 )
+    #                               )
+    reco_cuts["doptimization.fBrem"] = (reco_cuts["presel"] & (reco_electrons.fBrem > 0.05 ))
+    reco_cuts["doptimization.ptBiased"] = (reco_cuts["presel"] & (reco_electrons.ptBiased > 2.5 ))
+    reco_cuts["doptimization.unBiaed"] = (reco_cuts["presel"] & (reco_electrons.unBiased > 2.5 ))
+    reco_cuts["doptimization.trkRelIso"] = (reco_cuts["presel"] & (reco_electrons.trkRelIso < 0.3 ))
+    reco_cuts["doptimization.sip3d"] = (reco_cuts["presel"] & (reco_electrons.sip3d < 2.5 ))
+
     if opts.drawRecoElectrons:
         plotCollection(reco_electrons, "recoElectrons", xtitle="recoElectrons", outDir=opts.odir+"/diagnostic/all_reco_eles")    
     
@@ -102,7 +112,7 @@ def analyze(opts, args):
     
         # record number of signal electrons
         nfakes = ak.num(signal_electrons) - ak.num(matched_reco)
-        fakes = plotHist("n_signalElectrons_"+cut_name, vals=nfakes, xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes", lims=(-0.5,159.5), nbins=80)
+        fakes = plotHist("n_signalElectrons_"+cut_name, vals=nfakes, xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes", lims=(-0.5,29.5), nbins=30)
         nFakes[cut_name]=fakes
     
     plotEfficiency("eff_pt",

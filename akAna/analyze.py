@@ -168,14 +168,13 @@ def analyze(opts, args):
     
         # record number of signal electrons
         nfakes = ak.num(signal_electrons) - ak.num(matched_reco)
-<<<<<<< HEAD
-        fakes = plotHist("n_signalElectrons_"+cut_name, vals=nfakes, xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes", lims=(-0.5,29.5), nbins=30)
-=======
+
         fakes = plotHist("n_signalElectrons_"+cut_name, vals=nfakes, lims=(-0.5,159.5), nbins=80,
                          xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes")
+
         fakes_lo = plotHist("n_signalElectrons_lo_"+cut_name, vals=nfakes, lims=(-0.5,19.5), nbins=20,
                             xtitle="signal electron multiplicity", outDir=opts.odir+"/nFakes")
->>>>>>> dev
+
         nFakes[cut_name]=fakes
         nFakes_lo[cut_name]=fakes_lo
     

@@ -48,20 +48,25 @@ def analyze(opts, args):
     reco_electrons = cms_events['softElectrons']
     reco_cuts = {}
     reco_cuts["all"] = (reco_electrons.pt > pt_reco_lo) & (reco_electrons.pt < pt_reco_hi) 
-    reco_cuts["presel"] = (reco_cuts["all"] & 
-                           (np.abs(reco_electrons.dxy)< 0.1 ) & (np.abs(reco_electrons.dz) < 15 ) & 
-                           (reco_electrons.ip3d < 5 ) & (reco_electrons.trkRelIso < 2 ) &
-                           (reco_electrons.mvaId>-1) & (reco_electrons.ptBiased>-1)
-                          )
-    reco_cuts["doptimization.dxy"] = (reco_cuts["presel"] & (np.abs(reco_electrons.dxy) < 0.025 ))
-    reco_cuts["doptimization.dz"] = (reco_cuts["presel"] & (np.abs(reco_electrons.dz) < 0.1 ))
-    reco_cuts["doptimization.ip3d"] = (reco_cuts["presel"] & (reco_electrons.ip3d < 2 ))
-    reco_cuts["doptimization.mvaId"] = (reco_cuts["presel"] & (reco_electrons.mvaId > 2.5 ))
-    reco_cuts["doptimization.fBrem"] = (reco_cuts["presel"] & (reco_electrons.fBrem > 0.05 ))
-    reco_cuts["doptimization.ptBiased"] = (reco_cuts["presel"] & (reco_electrons.ptBiased > 2.5 ))
-    reco_cuts["doptimization.unBiaed"] = (reco_cuts["presel"] & (reco_electrons.unBiased > 2.5 ))
-    reco_cuts["doptimization.trkRelIso"] = (reco_cuts["presel"] & (reco_electrons.trkRelIso < 0.3 ))
-    reco_cuts["doptimization.sip3d"] = (reco_cuts["presel"] & (reco_electrons.sip3d < 2.5 ))
+   # reco_cuts["presel"] = (reco_cuts["all"] & 
+   #                        (np.abs(reco_electrons.dxy)< 0.1 ) & (np.abs(reco_electrons.dz) < 15 ) & 
+   #                        (reco_electrons.ip3d < 5 ) & (reco_electrons.trkRelIso < 2 ) &
+   #                        (reco_electrons.mvaId>-1) & (reco_electrons.ptBiased>-1)
+   #                       )
+   # reco_cuts["doptimization.dxy"] = (reco_cuts["presel"] & (np.abs(reco_electrons.dxy) < 0.025 ))
+   # reco_cuts["doptimization.dz"] = (reco_cuts["presel"] & (np.abs(reco_electrons.dz) < 0.1 ))
+   # reco_cuts["doptimization.ip3d"] = (reco_cuts["presel"] & (reco_electrons.ip3d < 2 ))
+   # reco_cuts["doptimization.mvaId"] = (reco_cuts["presel"] & (reco_electrons.mvaId > 2.5 ))
+   # reco_cuts["doptimization.fBrem"] = (reco_cuts["presel"] & (reco_electrons.fBrem > 0.05 ))
+   # reco_cuts["doptimization.ptBiased"] = (reco_cuts["presel"] & (reco_electrons.ptBiased > 2.5 ))
+   # reco_cuts["doptimization.unBiaed"] = (reco_cuts["presel"] & (reco_electrons.unBiased > 2.5 ))
+   # reco_cuts["doptimization.trkRelIso"] = (reco_cuts["presel"] & (reco_electrons.trkRelIso < 0.3 ))
+   # reco_cuts["doptimization.sip3d"] = (reco_cuts["presel"] & (reco_electrons.sip3d < 2.5 ))
+
+    reco_cuts["cut1_mvaId"] = (reco_cuts["all"] & (reco_electrons.mvaId > 3. ))
+    reco_cuts["cut2_dxy"] = (reco_cuts["cut1_mvaId"] & (reco_electrons.dxy < 0.02) & (reco_electrons.dxy > -0.02))
+    reco_cuts["cut3_dz"] = (reco_cuts["cut2_dxy"] & (reco_electrons.dz < 8) & (reco_electrons.dxy > -8))
+    reco_cuts["cut4_trkRelIso"] = (reco_cuts["cut3_dz"] & (reco_electrons.trkRelIso<1))
 
     # Direct which ROCs to produce for each variable
     # also must describe what values are 'signal-like' (hi, low,
@@ -77,7 +82,7 @@ def analyze(opts, args):
             'ptBiased'    : "hi",
             'unBiased'    : "hi",
             },
-        "presel": {
+        "cut1_mvaId": {
             'dxy'         : "abslo",
             'dz'          : "abslo",
             'ip3d'        : "abslo",
@@ -87,6 +92,46 @@ def analyze(opts, args):
             'ptBiased'    : "hi",
             'unBiased'    : "hi",
             },
+        "cut2_dxy": {
+            'dxy'         : "abslo",
+            'dz'          : "abslo",
+            'ip3d'        : "abslo",
+            'sip3d'       : "lo",
+            'trkRelIso'   : "lo",
+            'mvaId'       : "hi",
+            'ptBiased'    : "hi",
+            'unBiased'    : "hi",
+            },
+        "cut3_dz": {
+            'dxy'         : "abslo",
+            'dz'          : "abslo",
+            'ip3d'        : "abslo",
+            'sip3d'       : "lo",
+            'trkRelIso'   : "lo",
+            'mvaId'       : "hi",
+            'ptBiased'    : "hi",
+            'unBiased'    : "hi",
+            },
+        "cut4_trkRelIso": {
+            'dxy'         : "abslo",
+            'dz'          : "abslo",
+            'ip3d'        : "abslo",
+            'sip3d'       : "lo",
+            'trkRelIso'   : "lo",
+            'mvaId'       : "hi",
+            'ptBiased'    : "hi",
+            'unBiased'    : "hi",
+            },
+        # "presel": {
+        #     'dxy'         : "abslo",
+        #     'dz'          : "abslo",
+        #     'ip3d'        : "abslo",
+        #     'sip3d'       : "lo",
+        #     'trkRelIso'   : "lo",
+        #     'mvaId'       : "hi",
+        #     'ptBiased'    : "hi",
+        #     'unBiased'    : "hi",
+        #     },
     }
 
     if opts.drawRecoElectrons:

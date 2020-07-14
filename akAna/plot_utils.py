@@ -326,7 +326,7 @@ def plotROC(savename,
     nfakes = countBelow(b,eff_vals)
     nf = len(nfakes)
     if "hi" in signalLike:
-        effs = effs[::-1] # high=good means low values are very efficiency
+        effs = effs[::-1] # high=good means low values are very efficient
         for i in range(2,nf+1):
             ind = nf-i # nf-2, nf-3, ..., 1, 0
             nfakes[ind] += nfakes[ind+1] # add fakes passing tighter cuts

@@ -53,13 +53,10 @@ def analyze(opts, args):
                            (reco_electrons.ip3d < 5 ) & (reco_electrons.trkRelIso < 2 ) &
                            (reco_electrons.mvaId>-1) & (reco_electrons.ptBiased>-1)
                           )
-
-    #reco_cuts["doptimization_1"] = (reco_cuts["presel"] & 
-    #                                (np.abs(reco_electrons.dxy) < 0.025 ) &
-    #                                (np.abs(reco_electrons.dz) < 0.1 ) &
-    #                                (reco_electrons.ip3d < 2 ) &
-    #                                (reco_electrons.mvaId > 2.5 )
-    #                               )
+    reco_cuts["doptimization.dxy"] = (reco_cuts["presel"] & (np.abs(reco_electrons.dxy) < 0.025 ))
+    reco_cuts["doptimization.dz"] = (reco_cuts["presel"] & (np.abs(reco_electrons.dz) < 0.1 ))
+    reco_cuts["doptimization.ip3d"] = (reco_cuts["presel"] & (reco_electrons.ip3d < 2 ))
+    reco_cuts["doptimization.mvaId"] = (reco_cuts["presel"] & (reco_electrons.mvaId > 2.5 ))
     reco_cuts["doptimization.fBrem"] = (reco_cuts["presel"] & (reco_electrons.fBrem > 0.05 ))
     reco_cuts["doptimization.ptBiased"] = (reco_cuts["presel"] & (reco_electrons.ptBiased > 2.5 ))
     reco_cuts["doptimization.unBiaed"] = (reco_cuts["presel"] & (reco_electrons.unBiased > 2.5 ))

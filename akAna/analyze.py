@@ -21,10 +21,10 @@ def analyze(opts, args):
             plotCollection(cms_events[collection], collection, xtitle=collection, outDir=opts.odir+"/diagnostic/input_collections")    
 
     # common ficucial region selection
-    pt_truth_lo = 2.5
-    pt_truth_hi = 4.5
-    pt_reco_lo = 2
-    pt_reco_hi = 5
+    pt_truth_lo = 0 #2.5
+    pt_truth_hi = 10 #4.5
+    pt_reco_lo = 0 #
+    pt_reco_hi = 10 #
             
     # DEFINE THE TRUTH ELECTRONS        
     # derived array with extra truth information
@@ -65,6 +65,12 @@ def analyze(opts, args):
     # reco_cuts["doptimization.trkRelIso"] = (reco_cuts["presel"] & (reco_electrons.trkRelIso < 0.3 ))
     # reco_cuts["doptimization.sip3d"] = (reco_cuts["presel"] & (reco_electrons.sip3d < 2.5 ))
 
+    # can combine cuts doing something like this
+    reco_cuts["low"] = (reco_cuts["all"] & (reco_electrons.pt < 1.) & np.abs(reco_electrons.dxy < 0.1))
+    reco_cuts["med"] = (reco_cuts["all"] & (reco_electrons.pt > 1)  & (reco_electrons.pt < 2.5) & np.abs(reco_electrons.ip3d < 0.5))
+    reco_cuts["high"]= (reco_cuts["all"] & (reco_electrons.pt > 2.5) & np.abs(reco_electrons.mvaID > 0.5))
+    reco_cuts["combo"] = reco_cuts["low"] | reco_cuts["med"] | reco_cuts["high"]
+    
     reco_cuts["cut1_mvaId"] = (reco_cuts["all"] & (reco_electrons.mvaId > 3. ))
     reco_cuts["cut2_dxy"] = (reco_cuts["cut1_mvaId"] & (reco_electrons.dxy < 0.02) & (reco_electrons.dxy > -0.02))
     reco_cuts["cut3_dz"] = (reco_cuts["cut2_dxy"] & (reco_electrons.dz < 8) & (reco_electrons.dxy > -8))

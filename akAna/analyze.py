@@ -79,7 +79,7 @@ def analyze(opts, args):
     mN2 = cms_events['genParticles'][ cms_events['genParticles'].pdgId==1000023 ][:,0].mass
     dM = mN2 - mN1
     plotHist("mN1", vals=mN1, xtitle="mN1", outDir=opts.odir+"/truthAna")
-    plotHist("mN2", vals=mN2, xtitle="mN1", outDir=opts.odir+"/truthAna")
+    plotHist("mN2", vals=mN2, xtitle="mN2", outDir=opts.odir+"/truthAna")
     plotHist("dM", vals=dM, xtitle="dM", outDir=opts.odir+"/truthAna")
     plotHist("nEle", vals=ak.num(truth_electrons), xtitle="n truth electrons", outDir=opts.odir+"/truthAna")
     

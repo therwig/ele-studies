@@ -11,7 +11,8 @@ def getData(opts=None):
     else:
         user = os.environ['USER']
         if 'dlehner' in user:
-            cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()
+           #cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/nanoAOD.root")["Events"].arrays()      # <-- smaller file from earlier
+            cms_dict = uproot.open("/uscms/home/dlehner/nobackup/analysis/data/bigNanoAOD.root")["Events"].arrays()
         elif 'herwig' in user:
             if opts and opts.bigInput:
                 cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()

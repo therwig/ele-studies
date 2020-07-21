@@ -22,7 +22,7 @@ config = {
     'mvaId'       : pcfg(    -10,     20, 100, False, False, 'mvaId'),
     'pfRelIso'    : pcfg(      0,     10, 100, False, False, 'pfRelIso'),
     'pfvaId'      : pcfg(   19.9,     20, 100, False, False, 'pfvaId'),
-    'trkRelIso'   : pcfg(      0,      2, 100, False, False, 'trkRelIso'),
+    'trkRelIso'   : pcfg(      0,     25, 100, False, False, 'trkRelIso'),
     'vx'          : pcfg(   -0.2,    0.2,  40, False, False, 'vx'),
     'vy'          : pcfg(   -0.2,    0.2,  40, False, False, 'vy'),
     'vz'          : pcfg(    -10,     10,  40, False, False, 'vz'),

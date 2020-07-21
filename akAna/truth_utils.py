@@ -178,3 +178,39 @@ def dr_match(evts_ts, evts_rs, builder, doReco=False, debug=False, nDebug=5, ful
             
 #         builder.end_list()
 #     return builder
+
+
+
+
+@numba.jit
+def get_gen_masses(gen_parts_per_event, builder):
+    for gen_parts in gen_parts_per_event:
+        builder.begin_list()
+        mn1=0
+        mn2=0
+        for i in range(len(gen_parts)):            
+            if np.abs(gen_parts[i].pdgId)==1000022: mn1 = gen_parts[i].mass
+            if np.abs(gen_parts[i].pdgId)==1000023: mn2 = gen_parts[i].mass
+            if mn1>0 and mn2>0: continue
+            
+        builder.begin_record()
+        builder.field("mN1")
+        builder.append(mn1)
+        builder.field("mN2")
+        builder.append(mn2)
+        builder.end_record()
+        builder.end_list()
+    return builder
+
+def truth_reco_match(truth, reco):
+    match_truth = dr_match(truth, reco, ak.ArrayBuilder()).snapshot()
+    matching_truth_mask = match_truth.truth_to_reco_index >= 0
+        
+    match_reco = dr_match(truth, reco, ak.ArrayBuilder(), doReco=True).snapshot()
+    matching_reco_mask = match_reco.reco_to_truth_index >= 0
+        
+    # matched_truth = truth_electrons[matching_truth_mask]
+    # unmatched_truth = truth_electrons[~matching_truth_mask]
+    # matched_reco = signal_electrons[matching_reco_mask]
+    # unmatched_reco = signal_electrons[~matching_reco_mask]
+    return matching_truth_mask, matching_reco_mask

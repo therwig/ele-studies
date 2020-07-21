@@ -7,8 +7,11 @@ import optparse
 
 from data import getData
 from plot_utils import plotHist, plotCollection, plotEfficiency, plotROC, plotGraphs, combinePDFs
-from truth_utils import truth_link, dr_match
+from truth_utils import truth_link, dr_match, truth_reco_match
 from plot_config import reco_pl,truth_pl
+
+# def absLess(x,cut):
+#     return (x < cut) & (-x > cut)
 
 def analyze(opts, args):
     
@@ -21,11 +24,11 @@ def analyze(opts, args):
             plotCollection(cms_events[collection], collection, xtitle=collection, outDir=opts.odir+"/diagnostic/input_collections")    
 
     # common ficucial region selection
-    pt_truth_lo = 0 #2.5
-    pt_truth_hi = 10 #4.5
+    pt_truth_lo = 0
+    pt_truth_hi = 15 #4.5
     pt_reco_lo = 0 #
-    pt_reco_hi = 10 #
-            
+    pt_reco_hi = 15 #
+
     # DEFINE THE TRUTH ELECTRONS        
     # derived array with extra truth information
     truth_builder = truth_link(cms_events['genParticles'], ak.ArrayBuilder())
@@ -47,107 +50,58 @@ def analyze(opts, args):
     #reco_electrons = cms_events['electrons']
     reco_electrons = cms_events['softElectrons']
     reco_cuts = {}
-    reco_cuts["all"] = (reco_electrons.pt > pt_reco_lo) & (reco_electrons.pt < pt_reco_hi) 
-    # reco_cuts["presel"] = (reco_cuts["all"] & 
-    #                        (np.abs(reco_electrons.dxy)< 0.1 ) & (np.abs(reco_electrons.dz) < 15 ) & 
-    #                        (reco_electrons.ip3d < 5 ) & (reco_electrons.trkRelIso < 2 ) &
-    #                        (reco_electrons.mvaId>-1) & (reco_electrons.ptBiased>-1)
-    #                       )
-    #reco_cuts["doptimization_1"] = (reco_cuts["presel"] & 
-    #                                (np.abs(reco_electrons.dxy) < 0.025 ) &
-    #                                (np.abs(reco_electrons.dz) < 0.1 ) &
-    #                                (reco_electrons.ip3d < 2 ) &
-    #                                (reco_electrons.mvaId > 2.5 )
-    #                               )
-    # reco_cuts["doptimization.fBrem"] = (reco_cuts["presel"] & (reco_electrons.fBrem > 0.05 ))
-    # reco_cuts["doptimization.ptBiased"] = (reco_cuts["presel"] & (reco_electrons.ptBiased > 2.5 ))
-    # reco_cuts["doptimization.unBiaed"] = (reco_cuts["presel"] & (reco_electrons.unBiased > 2.5 ))
-    # reco_cuts["doptimization.trkRelIso"] = (reco_cuts["presel"] & (reco_electrons.trkRelIso < 0.3 ))
-    # reco_cuts["doptimization.sip3d"] = (reco_cuts["presel"] & (reco_electrons.sip3d < 2.5 ))
-
-    # can combine cuts doing something like this
-    reco_cuts["low"] = (reco_cuts["all"] & (reco_electrons.pt < 1.) & np.abs(reco_electrons.dxy < 0.1))
-    reco_cuts["med"] = (reco_cuts["all"] & (reco_electrons.pt > 1)  & (reco_electrons.pt < 2.5) & np.abs(reco_electrons.ip3d < 0.5))
-    reco_cuts["high"]= (reco_cuts["all"] & (reco_electrons.pt > 2.5) & np.abs(reco_electrons.mvaID > 0.5))
-    reco_cuts["combo"] = reco_cuts["low"] | reco_cuts["med"] | reco_cuts["high"]
+    reco_cuts["all"] = (reco_electrons.pt > pt_reco_lo) & (reco_electrons.pt < pt_reco_hi)
+    tight_IP = (np.abs(reco_electrons.dz) < 0.2) & (reco_electrons.sip3d < 3)
+    reco_cuts["ip"] = reco_cuts["all"] & tight_IP
+    signal_electrons = reco_electrons[ reco_cuts["ip"] ]
     
-    reco_cuts["cut1_mvaId"] = (reco_cuts["all"] & (reco_electrons.mvaId > 3. ))
-    reco_cuts["cut2_dxy"] = (reco_cuts["cut1_mvaId"] & (reco_electrons.dxy < 0.02) & (reco_electrons.dxy > -0.02))
-    reco_cuts["cut3_dz"] = (reco_cuts["cut2_dxy"] & (reco_electrons.dz < 8) & (reco_electrons.dxy > -8))
-    reco_cuts["cut4_trkRelIso"] = (reco_cuts["cut3_dz"] & (reco_electrons.trkRelIso<1))
-
     # Direct which ROCs to produce for each variable
     # also must describe what values are 'signal-like' (hi, low,
     # low absolute value [abslo], or high absolute values [abshi] )
     roc_config = {
-        "all": {
-            'dxy'         : "abslo",
-            'dz'          : "abslo",
-            'ip3d'        : "abslo",
-            'sip3d'       : "lo",
-            'trkRelIso'   : "lo",
-            'mvaId'       : "hi",
-            'ptBiased'    : "hi",
-            'unBiased'    : "hi",
-            },
-        "cut1_mvaId": {
-            'dxy'         : "abslo",
-            'dz'          : "abslo",
-            'ip3d'        : "abslo",
-            'sip3d'       : "lo",
-            'trkRelIso'   : "lo",
-            'mvaId'       : "hi",
-            'ptBiased'    : "hi",
-            'unBiased'    : "hi",
-            },
-        "cut2_dxy": {
-            'dxy'         : "abslo",
-            'dz'          : "abslo",
-            'ip3d'        : "abslo",
-            'sip3d'       : "lo",
-            'trkRelIso'   : "lo",
-            'mvaId'       : "hi",
-            'ptBiased'    : "hi",
-            'unBiased'    : "hi",
-            },
-        "cut3_dz": {
-            'dxy'         : "abslo",
-            'dz'          : "abslo",
-            'ip3d'        : "abslo",
-            'sip3d'       : "lo",
-            'trkRelIso'   : "lo",
-            'mvaId'       : "hi",
-            'ptBiased'    : "hi",
-            'unBiased'    : "hi",
-            },
-        "cut4_trkRelIso": {
-            'dxy'         : "abslo",
-            'dz'          : "abslo",
-            'ip3d'        : "abslo",
-            'sip3d'       : "lo",
-            'trkRelIso'   : "lo",
-            'mvaId'       : "hi",
-            'ptBiased'    : "hi",
-            'unBiased'    : "hi",
-            },
-        # "presel": {
-        #     'dxy'         : "abslo",
-        #     'dz'          : "abslo",
-        #     'ip3d'        : "abslo",
-        #     'sip3d'       : "lo",
-        #     'trkRelIso'   : "lo",
-        #     'mvaId'       : "hi",
-        #     'ptBiased'    : "hi",
-        #     'unBiased'    : "hi",
-        #     },
+        'dxy'         : "abslo",
+        'dz'          : "abslo",
+        'ip3d'        : "abslo",
+        'sip3d'       : "lo",
+        'trkRelIso'   : "lo",
+        'mvaId'       : "hi",
+        'ptBiased'    : "hi",
+        'unBiased'    : "hi",
     }
 
     if opts.drawRecoElectrons:
         plotCollection(reco_electrons, "recoElectrons", xtitle="recoElectrons", outDir=opts.odir+"/diagnostic/all_reco_eles")    
     
     # BEGIN THE ANALYSIS
-    evt_mask = ak.num(truth_electrons)==2
+    met = cms_events['met']
+    metPhi = cms_events['metPhi']
+    mN1 = cms_events['genParticles'][ cms_events['genParticles'].pdgId==1000022 ][:,0].mass
+    mN2 = cms_events['genParticles'][ cms_events['genParticles'].pdgId==1000023 ][:,0].mass
+    dM = mN2 - mN1
+    plotHist("mN1", vals=mN1, xtitle="mN1", outDir=opts.odir+"/truthAna")
+    plotHist("mN2", vals=mN2, xtitle="mN1", outDir=opts.odir+"/truthAna")
+    plotHist("dM", vals=dM, xtitle="dM", outDir=opts.odir+"/truthAna")
+    plotHist("nEle", vals=ak.num(truth_electrons), xtitle="n truth electrons", outDir=opts.odir+"/truthAna")
     
+    truth_is_match, reco_is_match = truth_reco_match(truth_electrons, signal_electrons)
+    evt_mask = ak.num(truth_electrons)==2
+    dMs = {"dm1" : (dM > 0.99) & (dM < 1.01), "dm3" : (dM > 2.99) & (dM < 3.01) }
+    for dMname in dMs:
+        dm_mask = dMs[dMname]
+        pt1 = ak.max(truth_electrons[evt_mask & dm_mask].pt,axis=1)
+        pt2 = ak.min(truth_electrons[evt_mask & dm_mask].pt,axis=1)
+        # pt1_match = ak.max(truth_electrons[evt_mask & dm_mask].pt,axis=1)
+        # pt2_match = ak.min(truth_electrons[evt_mask & dm_mask].pt,axis=1)
+        plotHist("pt1", vals=[pt1,pt1_match], xtitle="leading truth electron pt", outDir=opts.odir+"/truthAna/"+dMname)
+        plotHist("pt2", vals=pt2, xtitle="subleading truth electron pt", outDir=opts.odir+"/truthAna/"+dMname)
+
+
+        # matched_truth = truth_electrons[matching_truth_mask]
+        # unmatched_truth = truth_electrons[~matching_truth_mask]
+        # matched_reco = signal_electrons[matching_reco_mask]
+        # unmatched_reco = signal_electrons[~matching_reco_mask]
+        
+    # STUDY RECO Working Points
     efficiencies={}
     efficiencies_lo={}
     nFakes={}
@@ -162,13 +116,12 @@ def analyze(opts, args):
         match_extension = match_builder.snapshot()
         matching_truth_mask = match_extension.truth_to_reco_index >= 0
         # matching_reco_mask = match_extension.truth_to_reco_index[matching_truth_mask]
-    
+
         match_builderR = dr_match(truth_electrons, signal_electrons, ak.ArrayBuilder(), doReco=True, debug=debugMatching)
         match_extensionR = match_builderR.snapshot()
         matching_reco_mask = match_extensionR.reco_to_truth_index >= 0
         nonmatching_reco_mask = match_extensionR.reco_to_truth_index < 0
-        
-        
+                
         matched_truth = truth_electrons[matching_truth_mask]
         unmatched_truth = truth_electrons[~matching_truth_mask]
         matched_reco = signal_electrons[matching_reco_mask]
@@ -188,24 +141,24 @@ def analyze(opts, args):
             if cut_name == "all": normalizeVars = True
             plotCollection([matched_reco,unmatched_reco], cut_name+"_matching_reco", leg=["matched","unmatched"], plotlist=reco_pl,
                            outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name, normAttrs=normalizeVars, profile=True)
-            if cut_name in roc_config:
-                maxeff = ak.count(truth_electrons)
-                if maxeff: maxeff = ak.count(matched_truth) / maxeff
-                rocs={}
-                for var in roc_config[cut_name]:
-                    signal = ak.to_numpy(ak.flatten(matched_reco[var]))
-                    background = ak.to_numpy(ak.flatten(unmatched_reco[var]))
-                    roc = plotROC(var, signal, background, maxeff=maxeff, nEvts=nEvents, signalLike=roc_config[cut_name][var],
-                            outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name+"/roc")
-                    rocs[var]=roc
-                plotGraphs("overlay_1d", [rocs[v] for v in rocs], leg=[v for v in rocs],
-                           xtitle="Efficiency", ytitle="Fake multiplicity per evt",
-                           outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name+"/roc")
+        if opts.ROC: #doROC  cut_name in roc_config:
+            maxeff = ak.count(truth_electrons)
+            if maxeff: maxeff = ak.count(matched_truth) / maxeff
+            rocs={}
+            for var in roc_config:
+                signal = ak.to_numpy(ak.flatten(matched_reco[var]))
+                background = ak.to_numpy(ak.flatten(unmatched_reco[var]))
+                roc = plotROC(var, signal, background, maxeff=maxeff, nEvts=nEvents, signalLike=roc_config[var],
+                        outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name+"/roc")
+                rocs[var]=roc
+            plotGraphs("overlay_1d", [rocs[v] for v in rocs], leg=[v for v in rocs],
+                       xtitle="Efficiency", ytitle="Fake multiplicity per evt",
+                       outDir=opts.odir+"/diagnostic/match_comparison/reco_"+cut_name+"/roc")
                 # passVals = ak.to_numpy(ak.flatten(matched_truth.pt))
                 # totVals = ak.to_numpy(ak.flatten(truth_electrons.pt))
                 # roc_cfg=roc_config[cut_name]
                 # normalizeVars = False
-        
+                        
         # display matching efficiencies
         passVals = ak.to_numpy(ak.flatten(matched_truth.pt))
         totVals = ak.to_numpy(ak.flatten(truth_electrons.pt))
@@ -227,6 +180,12 @@ def analyze(opts, args):
 
         nFakes[cut_name]=fakes
         nFakes_lo[cut_name]=fakes_lo
+
+
+        plotHist("met", vals=met, nbins=80, xtitle="met", outDir=opts.odir+"/met")
+        plotHist("metPhi", vals=metPhi, nbins=80, xtitle="met phi", outDir=opts.odir+"/met")
+
+        
     
     plotEfficiency("eff_pt",
                    effs=[efficiencies[cut] for cut in reco_cuts],
@@ -248,8 +207,13 @@ def analyze(opts, args):
              leg=[cut for cut in reco_cuts], showMean=True,
              xtitle="fake multiplicity",
              outDir=opts.odir+"/final_comparisons")
-        
-    combinePDFs()
+
+
+
+
+
+    
+    #combinePDFs()
     
     
     
@@ -264,6 +228,7 @@ if __name__ == "__main__":
     parser.add_option("--drawRecoElectrons", action='store_true', default = False, help="histogram selected reco electrons")
     parser.add_option("--drawMatchedCollections", action='store_true', default = False, help="histogram all matched/unmatched truth and reco eles")
     parser.add_option("--drawMatchedReco", action='store_true', default = False, help="histogram all matched/unmatched reco eles")
+    parser.add_option("--ROC", action='store_true', default = False, help="do ROCs only")
     parser.add_option("--drawMatchedTruth", action='store_true', default = False, help="histogram all matched/unmatched truth eles")
     (options, args) = parser.parse_args()
     analyze(options, args)

@@ -16,12 +16,16 @@ def getData(opts=None):
             if opts and opts.bigInput:
                 cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/nanoAOD.root")["Events"].arrays()
             else:
-                cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/orig_nanoAOD.root")["Events"].arrays()
+                #cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/orig_nanoAOD.root")["Events"].arrays()
+                cms_dict = uproot.open("/Users/herwig/Desktop/dominic/data/met100_skim.root")["Events"].arrays()
+                print("reading met skim file")
         else:
             raise Exception("Must set data directory for user: {}!".format(user))
     cms_dict_ak1 = {name.decode(): ak.from_awkward0(array) for name, array in cms_dict.items()}
     
     cms_events = ak.zip({
+        "met": cms_dict_ak1["GenMET_pt"],
+        "metPhi": cms_dict_ak1["GenMET_phi"],
         "genParticles": ak.zip({
             "pt"     : cms_dict_ak1["GenPart_pt"],
             "eta"    : cms_dict_ak1["GenPart_eta"],

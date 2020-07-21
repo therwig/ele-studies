@@ -22,9 +22,9 @@ def analyze(opts, args):
 
     # common fiducial region selection
     pt_truth_lo = 0
-    pt_truth_hi = 10
+    pt_truth_hi = 15
     pt_reco_lo = 0
-    pt_reco_hi = 10
+    pt_reco_hi = 15
             
     # DEFINE THE TRUTH ELECTRONS        
     # derived array with extra truth information
@@ -59,7 +59,8 @@ def analyze(opts, args):
     reco_cuts["high"] = ((reco_electrons.pt >= 2.5 ) & (reco_electrons.pt < 5.0 ) &
                          (reco_electrons.ip3d < 2.5 ) &
                          (reco_electrons.sip3d < 2.5 ) &
-                         (reco_electrons.trkRelIso < 2.0 ) )
+                         (reco_electrons.trkRelIso < 2.0 ) &
+                         (reco_electrons.mvaId > 1.0 ) )
     reco_cuts["combo"] = (reco_cuts["low"]|reco_cuts["medium"]|reco_cuts["high"])
 
     # Direct which ROCs to produce for each variable

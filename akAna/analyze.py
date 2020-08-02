@@ -94,22 +94,15 @@ def analyze(opts, args):
     plotHist("dM", vals=dM, xtitle="dM", outDir=opts.odir+"/truthAna")
     plotHist("nEle", vals=ak.num(truth_electrons), xtitle="n truth electrons", outDir=opts.odir+"/truthAna")
     
-    truth_is_match, reco_is_match = truth_reco_match(truth_electrons, signal_electrons)
     evt_mask = ak.num(truth_electrons)==2
     dMs = {"dm1" : (dM > 0.99) & (dM < 1.01), "dm3" : (dM > 2.99) & (dM < 3.01) }
     for dMname in dMs:
         dm_mask = dMs[dMname]
         pt1 = ak.max(truth_electrons[evt_mask & dm_mask].pt,axis=1)
         pt2 = ak.min(truth_electrons[evt_mask & dm_mask].pt,axis=1)
-        # pt1_match = ak.max(truth_electrons[evt_mask & dm_mask].pt,axis=1)
-        # pt2_match = ak.min(truth_electrons[evt_mask & dm_mask].pt,axis=1)
         plotHist("pt1", vals=pt1, xtitle="leading truth electron pt", outDir=opts.odir+"/truthAna/"+dMname)
         plotHist("pt2", vals=pt2, xtitle="subleading truth electron pt", outDir=opts.odir+"/truthAna/"+dMname)
 
-        # matched_truth = truth_electrons[matching_truth_mask]
-        # unmatched_truth = truth_electrons[~matching_truth_mask]
-        # matched_reco = signal_electrons[matching_reco_mask]
-        # unmatched_reco = signal_electrons[~matching_reco_mask]
         
     # STUDY RECO Working Points
     efficiencies={}

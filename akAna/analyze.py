@@ -103,9 +103,8 @@ def analyze(opts, args):
         pt2 = ak.min(truth_electrons[evt_mask & dm_mask].pt,axis=1)
         # pt1_match = ak.max(truth_electrons[evt_mask & dm_mask].pt,axis=1)
         # pt2_match = ak.min(truth_electrons[evt_mask & dm_mask].pt,axis=1)
-        plotHist("pt1", vals=[pt1,pt1_match], xtitle="leading truth electron pt", outDir=opts.odir+"/truthAna/"+dMname)
+        plotHist("pt1", vals=pt1, xtitle="leading truth electron pt", outDir=opts.odir+"/truthAna/"+dMname)
         plotHist("pt2", vals=pt2, xtitle="subleading truth electron pt", outDir=opts.odir+"/truthAna/"+dMname)
-
 
         # matched_truth = truth_electrons[matching_truth_mask]
         # unmatched_truth = truth_electrons[~matching_truth_mask]
@@ -196,6 +195,16 @@ def analyze(opts, args):
         plotHist("met", vals=met, nbins=80, xtitle="met", outDir=opts.odir+"/met")
         plotHist("metPhi", vals=metPhi, nbins=80, xtitle="met phi", outDir=opts.odir+"/met")
 
+        for dMname in dMs:
+            dm_mask = dMs[dMname]
+            # pt1 = ak.max(truth_electrons[evt_mask & dm_mask].pt,axis=1)
+            
+            nMatch = plotHist("n_matchedSignal_2eTruth_"+dMname+"_"+cut_name, vals=ak.num(matched_reco[evt_mask & dm_mask]),
+                              lims=(-0.5,4.5), nbins=5,outDir=opts.odir+"/event", norm=True,
+                              xtitle="matched signal electron multiplicity for "+dMname+" 2e events")
+            print("Acceptance for 2e events for {} with '{}' selection is: {:.3g}".format(dMname,cut_name, nMatch[0][0][2]) )
+        # plotHist("n_matchedSignal_"+cut_name, vals=ak.num(matched_reco), lims=(-0.5,4.5), nbins=5,
+        #          xtitle="matched signal electron multiplicity", outDir=opts.odir+"/event")
         
     
     plotEfficiency("eff_pt",

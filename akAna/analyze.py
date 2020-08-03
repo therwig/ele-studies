@@ -21,6 +21,7 @@ def analyze(opts, args):
     # histogram all attributes for input quantities
     if opts.drawInputHistograms:
         for collection in cms_events.columns:
+            if 'met' in collection: break
             plotCollection(cms_events[collection], collection, xtitle=collection, outDir=opts.odir+"/diagnostic/input_collections")    
 
     # common fiducial region selection

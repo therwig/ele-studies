@@ -70,7 +70,8 @@ def plotHist(savename,
     sname = sname.replace('//','/')
     if writeTitle: plt.text(-0.1, 1.1, sname, fontsize=6, transform=plt.gca().transAxes)
     
-    if leg: fig.legend()
+    if leg and len(leg)>1:
+        fig.legend()
     
     # save figs
     pathlib.Path(outDir).mkdir(parents=True, exist_ok=True)
